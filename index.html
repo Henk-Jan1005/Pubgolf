@@ -12,13 +12,14 @@
       text-align: center;
     }
     #login-container, #scoreboard-container {
-      max-width: 600px;
+      max-width: 800px;
       margin: 0 auto;
       text-align: center;
     }
     input[type="text"],
     input[type="number"],
-    input[type="password"] {
+    input[type="password"],
+    select {
       padding: 6px;
       margin: 4px 0;
       width: 90%;
@@ -38,12 +39,25 @@
       padding: 8px;
       text-align: center;
     }
+    .small-input {
+      width: 60px;
+    }
+    .top-buttons {
+      margin: 10px;
+    }
   </style>
 </head>
 <body>
   <!-- Login Section -->
   <div id="login-container">
     <h2>Login</h2>
+    <label for="groupSelect">Select Group:</label><br>
+    <select id="groupSelect">
+      <option value="group1">Group 1 (3 drinking players)</option>
+      <option value="group2">Group 2 (2 drinking players)</option>
+      <option value="group3">Group 3 (2 drinking players)</option>
+    </select>
+    <br>
     <input type="password" id="password" placeholder="Enter password" />
     <br>
     <button onclick="login()">Login</button>
@@ -51,15 +65,16 @@
 
   <!-- Scoreboard Section (initially hidden) -->
   <div id="scoreboard-container" style="display:none;">
-    <h2>PUBGOLF Scoreboard</h2>
-    <div>
-      <button onclick="addPlayer()">Add Player</button>
+    <h2 id="group-title">PUBGOLF Scoreboard</h2>
+    <div class="top-buttons">
       <button onclick="clearScores()">Clear Scores</button>
+      <button onclick="logout()">Logout</button>
     </div>
     <table>
       <thead>
         <tr>
           <th>Player</th>
+          <!-- 9 Hole columns -->
           <th>Hole 1</th>
           <th>Hole 2</th>
           <th>Hole 3</th>
@@ -69,6 +84,7 @@
           <th>Hole 7</th>
           <th>Hole 8</th>
           <th>Hole 9</th>
+          <th>Challenges Completed</th>
           <th>Total</th>
         </tr>
       </thead>
@@ -79,20 +95,44 @@
   </div>
 
   <script>
-    // Global scoreboard array: each player has a name and an array of 9 scores.
-    let scoreboard = [];
+    // Configuration for each group:
+    // Each group has its own password and preset number of players.
+    const groupData = {
+      group1: { password: "Thobias1", players: 3, title: "Group 1 (3 drinking players)" },
+      group2: { password: "Thobias2", players: 2, title: "Group 2 (2 drinking players)" },
+      group3: { password: "Thobias3", players: 2, title: "Group 3 (2 drinking players)" }
+    };
 
-    // Save scoreboard data to localStorage
+    let scoreboard = []; // Holds the current group's scoreboard data.
+    let currentGroup = ""; // Will be "group1", "group2", or "group3".
+
+    // Save scoreboard data to localStorage for the current group
     function saveScoreboard() {
-      localStorage.setItem('pubgolfScoreboard', JSON.stringify(scoreboard));
+      if (currentGroup) {
+        localStorage.setItem('pubgolfScoreboard_' + currentGroup, JSON.stringify(scoreboard));
+      }
     }
 
-    // Load scoreboard data from localStorage
+    // Load scoreboard data from localStorage for the current group
     function loadScoreboard() {
-      const data = localStorage.getItem('pubgolfScoreboard');
+      const data = localStorage.getItem('pubgolfScoreboard_' + currentGroup);
       if (data) {
         scoreboard = JSON.parse(data);
       }
+    }
+
+    // Initialize scoreboard with default players for the current group
+    function initScoreboard() {
+      scoreboard = [];
+      const numPlayers = groupData[currentGroup].players;
+      for (let i = 0; i < numPlayers; i++) {
+        scoreboard.push({
+          name: "Player " + (i + 1),
+          scores: Array(9).fill(0),
+          challenges: 0
+        });
+      }
+      saveScoreboard();
     }
 
     // Render the scoreboard table based on the 'scoreboard' array
@@ -102,7 +142,7 @@
       scoreboard.forEach((player, pIndex) => {
         const row = document.createElement('tr');
 
-        // Player name cell with editable input
+        // Player name cell (editable)
         const nameCell = document.createElement('td');
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
@@ -114,26 +154,43 @@
         nameCell.appendChild(nameInput);
         row.appendChild(nameCell);
 
-        // Create cells for 9 holes
-        let total = 0;
+        // Create cells for 9 holes (scores)
+        let sumHoles = 0;
         for (let i = 0; i < 9; i++) {
           const scoreCell = document.createElement('td');
           const scoreInput = document.createElement('input');
           scoreInput.type = 'number';
+          scoreInput.className = 'small-input';
           scoreInput.value = player.scores[i] !== undefined ? player.scores[i] : "";
           scoreInput.oninput = function() {
             let val = parseInt(scoreInput.value);
             scoreboard[pIndex].scores[i] = isNaN(val) ? 0 : val;
             saveScoreboard();
-            renderScoreboard(); // Refresh to update total
+            renderScoreboard(); // Refresh to update totals
           };
           scoreCell.appendChild(scoreInput);
           row.appendChild(scoreCell);
-          total += parseInt(scoreInput.value) || 0;
+          sumHoles += parseInt(scoreInput.value) || 0;
         }
 
-        // Total score cell
+        // Challenges Completed cell (editable)
+        const challengeCell = document.createElement('td');
+        const challengeInput = document.createElement('input');
+        challengeInput.type = 'number';
+        challengeInput.className = 'small-input';
+        challengeInput.value = player.challenges;
+        challengeInput.oninput = function() {
+          let val = parseInt(challengeInput.value);
+          scoreboard[pIndex].challenges = isNaN(val) ? 0 : val;
+          saveScoreboard();
+          renderScoreboard();
+        };
+        challengeCell.appendChild(challengeInput);
+        row.appendChild(challengeCell);
+
+        // Total score cell (computed as sum of holes minus challenges)
         const totalCell = document.createElement('td');
+        const total = sumHoles - (parseInt(challengeInput.value) || 0);
         totalCell.textContent = total;
         row.appendChild(totalCell);
 
@@ -141,37 +198,47 @@
       });
     }
 
-    // Function to add a new player to the scoreboard
-    function addPlayer() {
-      const playerName = "Player " + (scoreboard.length + 1);
-      scoreboard.push({ name: playerName, scores: Array(9).fill(0) });
-      saveScoreboard();
-      renderScoreboard();
-    }
-
-    // Function to clear the entire scoreboard
+    // Clear the scoreboard for the current group (after confirmation)
     function clearScores() {
-      if (confirm("Are you sure you want to clear all scores?")) {
-        scoreboard = [];
-        saveScoreboard();
+      if (confirm("Are you sure you want to clear all scores for this group?")) {
+        initScoreboard();
         renderScoreboard();
       }
     }
 
-    // Login function: checks if the entered password matches "Thobias"
+    // Logout: returns to login screen
+    function logout() {
+      saveScoreboard();
+      document.getElementById('scoreboard-container').style.display = 'none';
+      document.getElementById('login-container').style.display = 'block';
+      document.getElementById('password').value = "";
+      currentGroup = "";
+      scoreboard = [];
+    }
+
+    // Login function: checks if the entered password matches the selected group's password
     function login() {
+      const selectedGroup = document.getElementById('groupSelect').value;
       const enteredPassword = document.getElementById('password').value;
-      if (enteredPassword === "Thobias") {
+      
+      if (enteredPassword === groupData[selectedGroup].password) {
+        currentGroup = selectedGroup;
+        // Hide login and show scoreboard container
         document.getElementById('login-container').style.display = 'none';
         document.getElementById('scoreboard-container').style.display = 'block';
+        document.getElementById('group-title').textContent = groupData[selectedGroup].title + " Scoreboard";
+        // Load saved scoreboard if available; if not, initialize default players
         loadScoreboard();
+        if (!scoreboard || scoreboard.length === 0) {
+          initScoreboard();
+        }
         renderScoreboard();
       } else {
         alert("Incorrect password. Please try again.");
       }
     }
 
-    // Auto-save feature: also save every 30 seconds in case of unexpected issues.
+    // Auto-save: Save every 30 seconds in case of unexpected issues.
     setInterval(saveScoreboard, 30000);
   </script>
 </body>
