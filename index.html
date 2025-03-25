@@ -1,1 +1,178 @@
-test
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PUBGOLF Scoreboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    #login-container, #scoreboard-container {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="password"] {
+      padding: 6px;
+      margin: 4px 0;
+      width: 90%;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Section -->
+  <div id="login-container">
+    <h2>Login</h2>
+    <input type="password" id="password" placeholder="Enter password" />
+    <br>
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- Scoreboard Section (initially hidden) -->
+  <div id="scoreboard-container" style="display:none;">
+    <h2>PUBGOLF Scoreboard</h2>
+    <div>
+      <button onclick="addPlayer()">Add Player</button>
+      <button onclick="clearScores()">Clear Scores</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Hole 1</th>
+          <th>Hole 2</th>
+          <th>Hole 3</th>
+          <th>Hole 4</th>
+          <th>Hole 5</th>
+          <th>Hole 6</th>
+          <th>Hole 7</th>
+          <th>Hole 8</th>
+          <th>Hole 9</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="scoreboard-body">
+        <!-- Player rows will be added here dynamically -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Global scoreboard array: each player has a name and an array of 9 scores.
+    let scoreboard = [];
+
+    // Save scoreboard data to localStorage
+    function saveScoreboard() {
+      localStorage.setItem('pubgolfScoreboard', JSON.stringify(scoreboard));
+    }
+
+    // Load scoreboard data from localStorage
+    function loadScoreboard() {
+      const data = localStorage.getItem('pubgolfScoreboard');
+      if (data) {
+        scoreboard = JSON.parse(data);
+      }
+    }
+
+    // Render the scoreboard table based on the 'scoreboard' array
+    function renderScoreboard() {
+      const tbody = document.getElementById('scoreboard-body');
+      tbody.innerHTML = "";
+      scoreboard.forEach((player, pIndex) => {
+        const row = document.createElement('tr');
+
+        // Player name cell with editable input
+        const nameCell = document.createElement('td');
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = player.name;
+        nameInput.oninput = function() {
+          scoreboard[pIndex].name = nameInput.value;
+          saveScoreboard();
+        };
+        nameCell.appendChild(nameInput);
+        row.appendChild(nameCell);
+
+        // Create cells for 9 holes
+        let total = 0;
+        for (let i = 0; i < 9; i++) {
+          const scoreCell = document.createElement('td');
+          const scoreInput = document.createElement('input');
+          scoreInput.type = 'number';
+          scoreInput.value = player.scores[i] !== undefined ? player.scores[i] : "";
+          scoreInput.oninput = function() {
+            let val = parseInt(scoreInput.value);
+            scoreboard[pIndex].scores[i] = isNaN(val) ? 0 : val;
+            saveScoreboard();
+            renderScoreboard(); // Refresh to update total
+          };
+          scoreCell.appendChild(scoreInput);
+          row.appendChild(scoreCell);
+          total += parseInt(scoreInput.value) || 0;
+        }
+
+        // Total score cell
+        const totalCell = document.createElement('td');
+        totalCell.textContent = total;
+        row.appendChild(totalCell);
+
+        tbody.appendChild(row);
+      });
+    }
+
+    // Function to add a new player to the scoreboard
+    function addPlayer() {
+      const playerName = "Player " + (scoreboard.length + 1);
+      scoreboard.push({ name: playerName, scores: Array(9).fill(0) });
+      saveScoreboard();
+      renderScoreboard();
+    }
+
+    // Function to clear the entire scoreboard
+    function clearScores() {
+      if (confirm("Are you sure you want to clear all scores?")) {
+        scoreboard = [];
+        saveScoreboard();
+        renderScoreboard();
+      }
+    }
+
+    // Login function: checks if the entered password matches "Thobias"
+    function login() {
+      const enteredPassword = document.getElementById('password').value;
+      if (enteredPassword === "Thobias") {
+        document.getElementById('login-container').style.display = 'none';
+        document.getElementById('scoreboard-container').style.display = 'block';
+        loadScoreboard();
+        renderScoreboard();
+      } else {
+        alert("Incorrect password. Please try again.");
+      }
+    }
+
+    // Auto-save feature: also save every 30 seconds in case of unexpected issues.
+    setInterval(saveScoreboard, 30000);
+  </script>
+</body>
+</html>
