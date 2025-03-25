@@ -9,11 +9,14 @@
   <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
-    /* Global Styles */
-    body {
+    /* Apply a full-page background (replace URL with your own image if desired) */
+    html, body {
       margin: 0;
+      padding: 0;
+      background: url('your-background-image.jpg') no-repeat center center fixed,
+                  linear-gradient(135deg, #74ABE2, #5563DE);
+      background-size: cover;
       font-family: 'Roboto', sans-serif;
-      background: #fafafa;
       color: #333;
     }
     /* Login Container */
@@ -21,7 +24,7 @@
       max-width: 600px;
       margin: 100px auto 30px;
       padding: 20px;
-      background: #fff;
+      background: rgba(255,255,255,0.95);
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
@@ -57,6 +60,8 @@
       max-width: 600px;
       margin: 0 auto;
       padding: 15px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
     }
     /* Fixed Navbar at Top */
     nav {
@@ -132,7 +137,11 @@
       font-size: 18px;
       font-weight: bold;
     }
+    /* Center the ± buttons using flex */
     .btn-adjust {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       font-size: 24px;
       width: 40px;
       height: 40px;
@@ -300,7 +309,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     /* ---------------------------
-       Global Configuration
+       Global Configuration & Constants
     ---------------------------- */
     const groupData = {
       group1: { password: "Thobias1", players: 3, title: "Group 1" },
@@ -308,17 +317,27 @@
       group3: { password: "Thobias3", players: 2, title: "Group 3" }
     };
 
+    // === GitHub API settings (update these with your own values) ===
+    const GITHUB_TOKEN = "YOUR_GITHUB_TOKEN_HERE";
+    const GITHUB_OWNER = "yourusername";
+    const GITHUB_REPO = "yourrepo";
+    const GITHUB_FILE_PATH = "data.json";
+    const GITHUB_BRANCH = "main";
+    // ================================================================
+
     let currentGroup = "";
     let scoreboard = []; // Array of player objects: { name: "", scores: [9 numbers] }
-    // Global challenges (loaded from challenges.txt). Each challenge is worth 1 point.
+    // Global challenges loaded from challenges.txt (each challenge is worth 1 point).
     // Structure: { "Challenge Name": { completedBy: groupId or null } }
     let challenges = {};
 
     /* ---------------------------
-       Data Persistence Functions
+       Data Persistence (Local Storage)
     ---------------------------- */
     function saveScoreboard(group = currentGroup) {
       localStorage.setItem('pubgolfScoreboard_' + group, JSON.stringify(scoreboard));
+      // Also push data remotely after a change.
+      pushDataToGitHub();
     }
     
     function loadScoreboard(group = currentGroup) {
@@ -344,6 +363,7 @@
     
     function saveChallenges() {
       localStorage.setItem('pubgolfChallenges', JSON.stringify(challenges));
+      pushDataToGitHub();
     }
     
     function loadChallenges() {
@@ -352,7 +372,7 @@
         challenges = JSON.parse(data);
         renderChallengesPage();
       } else {
-        // If no challenges are saved, load them from challenges.txt via fetch.
+        // Load challenges from challenges.txt via fetch
         fetch("challenges.txt")
           .then(response => response.text())
           .then(text => {
@@ -368,7 +388,6 @@
           })
           .catch(err => {
             console.error("Error loading challenges.txt:", err);
-            // Fallback: use an empty challenges object.
             challenges = {};
           });
       }
@@ -482,7 +501,6 @@
         groupScoreboard.forEach(player => {
           teamTotal += player.scores.reduce((a, b) => a + Number(b), 0);
         });
-        // Subtract challenges only if this group completed them.
         let challengeCount = 0;
         for (let ch in challenges) {
           if (challenges[ch].completedBy === group) {
@@ -520,7 +538,7 @@
       document.getElementById('challengesContent').innerHTML = html;
     }
     
-    // Confirmation for challenge completion. If confirmed, mark challenge as completed by the current group.
+    // Confirmation for challenge completion
     function confirmChallenge(challengeName) {
       if (confirm("Are you sure you want to complete \"" + challengeName + "\"? This action cannot be undone.")) {
         challenges[challengeName].completedBy = currentGroup;
@@ -532,7 +550,7 @@
     }
     
     /* ---------------------------
-       Graph: Update Chart (View Scores Page)
+       Chart: Update Chart (View Scores Page)
     ---------------------------- */
     let scoreChart;
     function updateChart() {
@@ -580,11 +598,90 @@
     }
     
     /* ---------------------------
+       GitHub Remote Data Functions
+       (Note: This implementation is conceptual.
+        Storing an access token in client-side code is insecure.
+        You must configure the repository, file, and token properly.)
+    ---------------------------- */
+    async function pushDataToGitHub() {
+      try {
+        // Build a remote data object from localStorage for all groups and challenges.
+        let remoteData = {
+          scoreboards: {
+            group1: JSON.parse(localStorage.getItem('pubgolfScoreboard_group1') || "[]"),
+            group2: JSON.parse(localStorage.getItem('pubgolfScoreboard_group2') || "[]"),
+            group3: JSON.parse(localStorage.getItem('pubgolfScoreboard_group3') || "[]")
+          },
+          challenges: JSON.parse(localStorage.getItem('pubgolfChallenges') || "{}")
+        };
+        const content = btoa(JSON.stringify(remoteData, null, 2));
+        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`;
+        // First, get the current file SHA.
+        let getResponse = await fetch(url, {
+          headers: {
+            "Authorization": "token " + GITHUB_TOKEN
+          }
+        });
+        let sha = "";
+        if (getResponse.ok) {
+          let fileData = await getResponse.json();
+          sha = fileData.sha;
+        }
+        // Now, push updated data.
+        let putResponse = await fetch(url, {
+          method: "PUT",
+          headers: {
+            "Authorization": "token " + GITHUB_TOKEN,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "Update pubgolf scores",
+            content: content,
+            sha: sha,
+            branch: GITHUB_BRANCH
+          })
+        });
+        if (!putResponse.ok) {
+          console.error("Failed to push data to GitHub", await putResponse.text());
+        }
+      } catch (err) {
+        console.error("Error pushing data to GitHub:", err);
+      }
+    }
+    
+    async function fetchDataFromGitHub() {
+      try {
+        const url = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_FILE_PATH}?${new Date().getTime()}`;
+        const response = await fetch(url);
+        if (response.ok) {
+          const remoteData = await response.json();
+          // Update localStorage with remote data.
+          if (remoteData.scoreboards) {
+            for (let group in remoteData.scoreboards) {
+              localStorage.setItem('pubgolfScoreboard_' + group, JSON.stringify(remoteData.scoreboards[group]));
+            }
+          }
+          if (remoteData.challenges) {
+            localStorage.setItem('pubgolfChallenges', JSON.stringify(remoteData.challenges));
+            challenges = remoteData.challenges;
+          }
+          if (currentGroup) {
+            loadScoreboard(currentGroup);
+            renderEditScorePage();
+            renderViewScoresPage();
+            renderChallengesPage();
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching data from GitHub:", err);
+      }
+    }
+    
+    /* ---------------------------
        Clear Saved Data Function
     ---------------------------- */
     function clearSavedData() {
       if (confirm("Are you sure you want to clear all saved data? This will remove all scores and challenge completions.")) {
-        // Remove keys for all groups and challenges
         for (let group in groupData) {
           localStorage.removeItem('pubgolfScoreboard_' + group);
         }
@@ -595,12 +692,16 @@
     }
     
     /* ---------------------------
-       Auto-Save Interval
+       Auto-Refresh & Auto-Save Intervals
+       - Every 30 seconds, fetch remote data from GitHub.
+       - Also, push local changes to GitHub after modifications.
     ---------------------------- */
+    setInterval(fetchDataFromGitHub, 30000);
+    
+    // Also auto-save local changes to GitHub every 30 seconds (in addition to local storage auto-save).
     setInterval(function(){
       if (currentGroup) {
-        saveScoreboard();
-        saveChallenges();
+        pushDataToGitHub();
       }
     }, 30000);
   </script>
