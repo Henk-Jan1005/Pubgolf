@@ -1,40 +1,54 @@
-<script type="module">
-  const sheetURL = "https://script.google.com/macros/s/AKfycbxTeRnonanU8BIkQcSGxpLj5ZyHHcpRBW6O_yQsKFnIocQtUMzwbzdtcJLmD7dq3_38/exec";
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scores opslaan</title>
+</head>
+<body>
+  <h1>Voeg score toe</h1>
+  <input id="naam" placeholder="Naam">
+  <input id="score" type="number" placeholder="Score">
+  <button onclick="submitScore()">Opslaan</button>
 
-  function submitScore() {
-    const naam = document.getElementById("naam").value;
-    const score = document.getElementById("score").value;
+  <h2>Scores</h2>
+  <ul id="scorelijst"></ul>
 
-    fetch(sheetURL, {
-      method: "POST",
-      body: JSON.stringify({ naam, score }),
-      headers: { "Content-Type": "application/json" }
-    })
-    .then(res => res.text())
-    .then(response => {
-      console.log("Succes:", response);
-      getScores();
-    })
-    .catch(error => console.error("Fout bij opslaan:", error));
-  }
+  <script>
+    const sheetURL = "https://script.google.com/macros/s/AKfycbxTeRnonanU8BIkQcSGxpLj5ZyHHcpRBW6O_yQsKFnIocQtUMzwbzdtcJLmD7dq3_38/exec";
 
-  function getScores() {
-    fetch(sheetURL)
-      .then(res => res.json())
-      .then(data => {
-        const lijst = document.getElementById("scorelijst");
-        lijst.innerHTML = "";
-        data.forEach(item => {
-          const li = document.createElement("li");
-          li.textContent = `${item.naam}: ${item.score}`;
-          lijst.appendChild(li);
-        });
+    function submitScore() {
+      const naam = document.getElementById("naam").value;
+      const score = document.getElementById("score").value;
+
+      fetch(sheetURL, {
+        method: "POST",
+        body: JSON.stringify({ naam, score }),
+        headers: { "Content-Type": "application/json" }
       })
-      .catch(error => console.error("Fout bij ophalen:", error));
-  }
+      .then(res => res.text())
+      .then(response => {
+        console.log("Succes:", response);
+        getScores(); // lijst vernieuwen
+      })
+      .catch(error => console.error("Fout bij opslaan:", error));
+    }
 
-  // Zorg dat de functie globaal beschikbaar is
-  window.submitScore = submitScore;
+    function getScores() {
+      fetch(sheetURL)
+        .then(res => res.json())
+        .then(data => {
+          const lijst = document.getElementById("scorelijst");
+          lijst.innerHTML = "";
+          data.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = `${item.naam}: ${item.score}`;
+            lijst.appendChild(li);
+          });
+        })
+        .catch(error => console.error("Fout bij ophalen:", error));
+    }
 
-  getScores();
-</script>
+    // Direct bij laden de scores ophalen
+    getScores();
+  </script>
+</body>
+</html>
