@@ -14,7 +14,7 @@
       background: #fafafa;
       color: #333;
     }
-    /* Navigation Bar */
+    /* Navigation Bar (icons only) */
     nav {
       position: fixed;
       top: 0;
@@ -41,7 +41,7 @@
     }
     /* Content Area */
     #content {
-      padding: 70px 15px 15px; /* leave space for the nav */
+      padding: 70px 15px 15px; /* leave space for nav */
       max-width: 800px;
       margin: 0 auto;
     }
@@ -58,6 +58,22 @@
       max-width: 600px;
       margin: 20px auto;
       height: 400px;
+    }
+    /* Table for Score Summary */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      text-align: center;
+      padding: 8px;
+    }
+    th {
+      background-color: #f2f2f2;
     }
     /* Team Setup Page */
     .team-card {
@@ -153,10 +169,19 @@
     .challenge-card button:hover {
       background: #218838;
     }
+    /* Map Page */
+    #mapPage iframe {
+      display: block;
+      width: 100%;
+      max-width: 800px;
+      height: 450px;
+      border: 0;
+      margin: 0 auto;
+    }
   </style>
 </head>
 <body>
-  <!-- Navigation Bar (Icons only) -->
+  <!-- Navigation Bar -->
   <nav>
     <button onclick="showPage('setupPage')" title="Team Setup">
       <span class="material-icons">group_add</span>
@@ -169,6 +194,9 @@
     </button>
     <button onclick="showPage('challengesPage')" title="Challenges">
       <span class="material-icons">emoji_events</span>
+    </button>
+    <button onclick="showPage('mapPage')" title="Map">
+      <span class="material-icons">map</span>
     </button>
     <button onclick="clearSavedData()" title="Clear Data">
       <span class="material-icons">delete_forever</span>
@@ -196,15 +224,21 @@
     <div id="challengesPage" class="page">
       <div id="challengesContent"></div>
     </div>
+    
+    <!-- Map Page -->
+    <div id="mapPage" class="page">
+      <h2 style="text-align:center;">Map</h2>
+      <iframe src="https://www.google.com/maps/embed?pb=!1m70!1m12!1m3!1d2451.3334178842306!2d5.117968949999998!3d52.0918633!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m55!3e2!4m5!1s0x47c66f4522100f9d%3A0x4aff5237934ed50d!2sCaf%C3%A9%20de%20Zaak%2C%20Korte%20Minrebroederstraat%209%2C%203512%20GG%20Utrecht!3m2!1d52.0921093!2d5.120213!4m5!1s0x47c66f44dd7f23b9%3A0xdccedabe537515a0!2sBar%20Cava%2C%20Ganzenmarkt%2C%20Utrecht!3m2!1d52.092209!2d5.11918!4m5!1s0x47c66f44f0992c8b%3A0xfce3d11e932a72e7!2sWijncaf%C3%A9%20Lefebvre%2C%20Neude%2C%20Utrecht!3m2!1d52.0930939!2d5.119249099999999!4m5!1s0x47c66f44ec4256ab%3A0x48dfbcbd6842b362!2sCaf%C3%A9%20&#39;t%20Neutje%2C%20Neude%2C%20Utrecht!3m2!1d52.0926823!2d5.118529199999999!4m5!1s0x47c66f44bbc07cd7%3A0x7a84080fa216c05d!2sCaf%C3%A9%20Flater%2C%20Oudegracht%2C%20Utrecht!3m2!1d52.091894599999996!2d5.1176213!4m5!1s0x47c66f43f694a4ef%3A0x5fd9337ee379f8e9!2sQuignon%20Kitchen%20%26%20Bar%2C%20Huis%20Drakenborch%2C%20Oudegracht%2C%20Utrecht!3m2!1d52.0921522!2d5.1171989!4m5!1s0x47c66f3c121b668b%3A0x65e854927ecba6d1!2sRum%20Club%2C%20Oudegracht%20aan%20de%20Werf%2C%20Utrecht!3m2!1d52.0922486!2d5.11647!4m5!1s0x47c66f44a0459733%3A0x4956eb66700ba4de!2sBeers%20%26%20Barrels%20-%20Utrecht%20Centrum%2C%20Oudegracht%20aan%20de%20Werf%2C%20Utrecht!3m2!1d52.0919095!2d5.1167415!4m5!1s0x47c66f5cb062d9fd%3A0xd643c263e05d7103!2sBelgisch%20Biercaf%C3%A9%20Olivier%20Utrecht%2C%20Achter%20Clarenburg%2C%20Utrecht!3m2!1d52.0906327!2d5.1156758!5e0!3m2!1snl!2snl!4v1743112823241!5m2!1snl!2snl" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
   </div>
   
   <!-- Include Chart.js from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     // Global Data Structures
-    // Teams is an array of objects: { name: string, players: [ { name: string, scores: [9 numbers] } ] }
+    // teams: Array of objects: { name: string, players: [ { name: string, scores: [9 numbers] } ] }
     let teams = [];
-    // Challenges object: keys are challenge names, each with a { completedBy: teamName or null }
+    // challenges: Object where keys are challenge names; each value is { completedBy: team name or null }
     let challenges = {};
 
     // ---------------------------
@@ -230,7 +264,6 @@
         challenges = JSON.parse(data);
         renderChallengesPage();
       } else {
-        // Fetch from challenges.txt
         fetch("challenges.txt")
           .then(response => response.text())
           .then(text => {
@@ -355,21 +388,21 @@
         });
         html += '</div>';
       });
-      // Display overall team totals (subtract one point per challenge completed)
+      // Display overall team totals (subtracting one point per challenge completed)
       html += '<h2>Game Totals</h2>';
       teams.forEach(team => {
-        let teamTotal = 0;
+        let points = 0;
         team.players.forEach(player => {
-          teamTotal += player.scores.reduce((a, b) => a + Number(b), 0);
+          points += player.scores.reduce((a, b) => a + Number(b), 0);
         });
-        let challengeCount = 0;
+        let challengesCount = 0;
         for (let ch in challenges) {
           if (challenges[ch].completedBy === team.name) {
-            challengeCount++;
+            challengesCount++;
           }
         }
-        teamTotal = teamTotal - challengeCount;
-        html += '<p><strong>' + team.name + ':</strong> ' + teamTotal + '</p>';
+        let finalScore = points - challengesCount;
+        html += '<p><strong>' + team.name + ':</strong> Points: ' + points + ' | Challenges: ' + challengesCount + ' | Total: ' + finalScore + '</p>';
       });
       document.getElementById('editScoreContent').innerHTML = html;
     }
@@ -397,6 +430,25 @@
     // ---------------------------
     function renderScoreGraphPage() {
       let html = '<h2>Score Graph</h2>';
+      // Build summary table
+      html += '<table>';
+      html += '<tr><th>Team</th><th>Points</th><th>Challenges</th><th>Total</th></tr>';
+      teams.forEach(team => {
+        let points = 0;
+        team.players.forEach(player => {
+          points += player.scores.reduce((a, b) => a + Number(b), 0);
+        });
+        let challengesCount = 0;
+        for (let ch in challenges) {
+          if (challenges[ch].completedBy === team.name) {
+            challengesCount++;
+          }
+        }
+        let finalScore = points - challengesCount;
+        html += '<tr><td>' + team.name + '</td><td>' + points + '</td><td>' + challengesCount + '</td><td>' + finalScore + '</td></tr>';
+      });
+      html += '</table>';
+      // Chart container
       html += '<div class="chart-container"><canvas id="scoreChart"></canvas></div>';
       document.getElementById('scoreGraphContent').innerHTML = html;
       updateChart();
@@ -406,19 +458,19 @@
       const labels = [];
       const data = [];
       teams.forEach(team => {
-        let teamTotal = 0;
+        let points = 0;
         team.players.forEach(player => {
-          teamTotal += player.scores.reduce((a, b) => a + Number(b), 0);
+          points += player.scores.reduce((a, b) => a + Number(b), 0);
         });
-        let challengeCount = 0;
+        let challengesCount = 0;
         for (let ch in challenges) {
           if (challenges[ch].completedBy === team.name) {
-            challengeCount++;
+            challengesCount++;
           }
         }
-        teamTotal = teamTotal - challengeCount;
+        let finalScore = points - challengesCount;
         labels.push(team.name);
-        data.push(teamTotal);
+        data.push(finalScore);
       });
       
       const ctx = document.getElementById('scoreChart').getContext('2d');
@@ -479,9 +531,14 @@
     }
     
     // ---------------------------
-    // Clear Data Function
+    // Clear Data Function (with password)
     // ---------------------------
     function clearSavedData() {
+      const pass = prompt("Enter password to clear data:");
+      if (pass !== "cheese") {
+        alert("Incorrect password. Data not cleared.");
+        return;
+      }
       if (confirm("Are you sure you want to clear all saved data? This will remove all teams, scores, and challenge completions.")) {
         localStorage.removeItem('pubgolfTeams');
         localStorage.removeItem('pubgolfChallenges');
