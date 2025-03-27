@@ -232,7 +232,7 @@
 <body>
   <!-- Login Sectie -->
   <div id="login-container">
-    <h2>Papi bamgia222</h2>
+    <h2>Papi bamgia</h2>
     <select id="groupSelect">
       <option value="group1">Group 1 (3 drinking players)</option>
       <option value="group2">Group 2 (2 drinking players)</option>
@@ -299,10 +299,10 @@
   <script>
     /***************************************************************
      * Configuratie voor Railway backend (PostgreSQL)
-     * Pas de onderstaande URL aan naar jouw Railway API basis-URL.
+     * Zorg dat de URL begint met https://
      ***************************************************************/
     const apiUrl = "https://railway-production-596f.up.railway.app";
-
+    
     /***************************************************************
      * Globale Configuratie
      ***************************************************************/
@@ -311,12 +311,13 @@
       group2: { password: "Thobias2", players: 2, title: "Group 2" },
       group3: { password: "Thobias3", players: 2, title: "Group 3" }
     };
-
+    
     let currentGroup = "";
     let scoreboard = []; // Array met spelers: { player_index, name, scores: [9 nummers] }
     let challenges = {}; // Object: { "Challenge Name": { completedBy: groupId of null } }
     let scoreChart;
-
+    let isScoreboardInitialized = false;  // Flag om te weten of we al hebben geïnitialiseerd
+    
     /***************************************************************
      * Data ophalen en opslaan via de API
      ***************************************************************/
@@ -325,23 +326,30 @@
       fetch(apiUrl + "/scoreboards/" + group)
         .then(response => response.json())
         .then(data => {
-          // Alleen initialiseren als er GEEN data is EN we hebben nog geen lokale data
-          if (data && Array.isArray(data) && data.length > 0) {
-            scoreboard = data;
-          } else if (scoreboard.length === 0) {
-            initScoreboard(group);
+          if (Array.isArray(data)) {
+            // Eerste keer: als er nog geen data bestaat, initialiseer dan
+            if (!isScoreboardInitialized) {
+              if (data.length === 0) {
+                initScoreboard(group);
+              } else {
+                scoreboard = data;
+              }
+              isScoreboardInitialized = true;
+            } else {
+              // Als we al geïnitialiseerd zijn, werk de lokale data alleen bij als de response niet leeg is
+              if (data.length > 0) {
+                scoreboard = data;
+              }
+            }
           }
           renderEditScorePage();
         })
         .catch(error => {
           console.error("Error loading scoreboard:", error);
-          if (scoreboard.length === 0) {
-            initScoreboard(group);
-          }
           renderEditScorePage();
         });
     }
-
+    
     // Initialiseer een nieuw scoreboard en sla dit op
     function initScoreboard(group = currentGroup) {
       scoreboard = [];
@@ -355,7 +363,7 @@
       }
       saveScoreboardToDB();
     }
-
+    
     // Sla het scoreboard op via de API
     function saveScoreboardToDB() {
       fetch(apiUrl + "/scoreboards/" + currentGroup, {
@@ -367,7 +375,7 @@
       .then(data => console.log("Scoreboard saved", data))
       .catch(error => console.error("Error saving scoreboard:", error));
     }
-
+    
     // Haal challenges op via de API
     function fetchChallenges() {
       fetch(apiUrl + "/challenges")
@@ -378,7 +386,7 @@
         })
         .catch(error => console.error("Error fetching challenges:", error));
     }
-
+    
     // Sla challenges op via de API
     function saveChallengesToDB() {
       fetch(apiUrl + "/challenges", {
@@ -390,7 +398,7 @@
       .then(data => console.log("Challenges saved", data))
       .catch(error => console.error("Error saving challenges:", error));
     }
-
+    
     // Verwijder data voor de huidige groep en globale challenges
     function clearData() {
       if (confirm("Are you sure you want to clear all data? This will remove all scores and challenge completions.")) {
@@ -403,7 +411,7 @@
           .catch(error => console.error("Error clearing data:", error));
       }
     }
-
+    
     /***************************************************************
      * Polling (optioneel): Ververs elke 5 seconden de data
      ***************************************************************/
@@ -413,7 +421,7 @@
         fetchChallenges();
       }, 5000);
     }
-
+    
     /***************************************************************
      * Login en navigatie functies
      ***************************************************************/
@@ -433,7 +441,7 @@
         alert("Incorrect password. Please try again.");
       }
     }
-
+    
     function showPage(pageId) {
       const pages = document.getElementsByClassName('page');
       for (let page of pages) {
@@ -448,7 +456,7 @@
         renderChallengesPage();
       }
     }
-
+    
     /***************************************************************
      * Render functies
      ***************************************************************/
@@ -474,25 +482,25 @@
       html += '<p style="text-align:center; font-size:20px; font-weight:bold; color:#2575fc;">Team Final Score: ' + teamTotal + '</p>';
       document.getElementById('editScoreContent').innerHTML = html;
     }
-
+    
     function updatePlayerName(index, newName) {
       scoreboard[index].name = newName;
       saveScoreboardToDB();
       renderEditScorePage();
     }
-
+    
     function incrementScore(playerIndex, holeIndex) {
       scoreboard[playerIndex].scores[holeIndex] = Number(scoreboard[playerIndex].scores[holeIndex]) + 1;
       saveScoreboardToDB();
       renderEditScorePage();
     }
-
+    
     function decrementScore(playerIndex, holeIndex) {
       scoreboard[playerIndex].scores[holeIndex] = Math.max(0, Number(scoreboard[playerIndex].scores[holeIndex]) - 1);
       saveScoreboardToDB();
       renderEditScorePage();
     }
-
+    
     // Bereken het teamtotaal
     function computeTeamTotal() {
       let total = 0;
@@ -507,7 +515,7 @@
       }
       return total - challengeCount;
     }
-
+    
     // Render de View Scores pagina
     function renderViewScoresPage() {
       let html = '';
@@ -556,7 +564,7 @@
           });
       });
     }
-
+    
     // Render de Challenges pagina
     function renderChallengesPage() {
       let html = '';
@@ -572,7 +580,7 @@
       }
       document.getElementById('challengesContent').innerHTML = html;
     }
-
+    
     function confirmChallenge(challengeName) {
       if (confirm("Are you sure you want to complete \"" + challengeName + "\"? This action cannot be undone.")) {
         challenges[challengeName].completedBy = currentGroup;
@@ -582,7 +590,7 @@
         renderEditScorePage();
       }
     }
-
+    
     // Chart: Update Chart (View Scores Page)
     function updateChart() {
       const labels = [];
@@ -621,7 +629,7 @@
           });
       });
     }
-
+    
     function drawChart(labels, data) {
       const ctx = document.getElementById('scoreChart').getContext('2d');
       if (scoreChart) { scoreChart.destroy(); }
