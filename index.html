@@ -1,29 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Google Sheets Test</title>
+  <meta charset="utf-8">
+  <title>Test Google Sheets Connectivity</title>
 </head>
 <body>
-  <h1>Google Sheets API Test</h1>
-  <button id="fetchBtn">Fetch Scoreboard Data</button>
-  <pre id="result"></pre>
-
+  <h1>Test Google Sheets Connectivity</h1>
+  <button onclick="testGet()">Test GET</button>
+  <button onclick="testPost()">Test POST</button>
+  <div id="output" style="background:#f0f0f0; padding:10px; margin-top:10px;"></div>
+  
   <script>
-    // Replace this URL with your deployed Apps Script web app URL
+    // Replace with your actual Apps Script web app URL
     const sheetURL = "https://script.google.com/macros/s/AKfycbxTeRnonanU8BIkQcSGxpLj5ZyHHcpRBW6O_yQsKFnIocQtUMzwbzdtcJLmD7dq3_38/exec";
     
-    document.getElementById("fetchBtn").addEventListener("click", () => {
-      // Using a test group parameter (adjust as needed)
-      fetch(sheetURL + "?action=getScoreboard")
+    function log(message) {
+      const outputDiv = document.getElementById("output");
+      outputDiv.innerHTML += `<p>${message}</p>`;
+      console.log(message);
+    }
+    
+    // Test a GET request (e.g., to fetch the scoreboard)
+    function testGet() {
+      log("Sending GET request...");
+      fetch(`${sheetURL}?action=getScoreboard`)
         .then(response => response.json())
         .then(data => {
-          document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+          log("GET response received: " + JSON.stringify(data));
         })
         .catch(error => {
-          document.getElementById("result").textContent = "Error: " + error;
+          log("Error in GET: " + error);
         });
-    });
+    }
+    
+    // Test a POST request (e.g., to update the scoreboard)
+    function testPost() {
+      log("Sending POST request...");
+      const payload = {
+        action: "updateScoreboard",
+        group: "testGroup",
+        scoreboard: [
+          { player_index: 0, name: "Test Player", scores: [1,2,3,4,5,6,7,8,9] }
+        ]
+      };
+      
+      fetch(sheetURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(data => {
+        log("POST response received: " + JSON.stringify(data));
+      })
+      .catch(error => {
+        log("Error in POST: " + error);
+      });
+    }
   </script>
 </body>
 </html>
