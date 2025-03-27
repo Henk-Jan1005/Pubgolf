@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Team Golf Score Tracker</title>
+  <title>Team Golf & Challenges (Single Sheet)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { margin: 0; font-family: sans-serif; }
@@ -93,7 +93,7 @@
 
   <!-- View Tab -->
   <div id="view" class="tab">
-    <h2>View Records</h2>
+    <h2>View Records (Single Sheet)</h2>
     <h3>Golf Scores</h3>
     <div id="golfScores" class="golf-list"></div>
     
@@ -121,14 +121,13 @@
     let currentName = null;
     let golfScores = Array(9).fill(0);
 
-    // On page load, we show "Edit" tab by default
+    // On page load, "Edit" tab is shown by default
     function showTab(tabId) {
       document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       
       if (tabId === 'view') {
-        fetchGolfScores();
-        fetchChallengeRecords();
+        fetchAllData();
       }
       if (tabId === 'challenges') {
         loadChallenges();
@@ -209,72 +208,77 @@
       .then(res => res.text())
       .then(response => {
         alert(response);
-        // Optionally reset scores to 0 after submission:
+        // Optionally reset scores to 0 after submission
         golfScores = Array(9).fill(0);
         generateGolfEditor();
       })
       .catch(err => console.error(err));
     }
 
-    // GET golf scores from the sheet
-    function fetchGolfScores() {
-      fetch(scriptURL + '?sheet=golf')
+    // GET the entire single sheet, then filter out golf vs. challenge rows
+    function fetchAllData() {
+      fetch(scriptURL)  // no query param => doGet() returns all rows
         .then(res => res.text())
         .then(text => {
           try {
             const data = JSON.parse(text);
-            const golfDiv = document.getElementById('golfScores');
-            golfDiv.innerHTML = '';
-            // data[0] is headers; skip it with slice(1)
-            data.slice(1).reverse().forEach(row => {
-              // row = [Timestamp, Team, Name, Hole1,...,Hole9, Total]
-              const holes = row.slice(3, 12).join(", ");
-              const total = row[12];
-              const div = document.createElement('div');
-              div.textContent = `Team ${row[1]} - ${row[2]}: [${holes}] Total: ${total}`;
-              golfDiv.appendChild(div);
-            });
+            displayGolfScores(data);
+            displayChallengeRecords(data);
           } catch (err) {
-            console.error("Error parsing golf scores", err);
+            console.error("Error parsing single sheet data", err);
           }
-        });
+        })
+        .catch(err => console.error("Fetch error", err));
     }
 
-    // GET challenge records from the sheet
-    function fetchChallengeRecords() {
-      fetch(scriptURL + '?sheet=challenges')
-        .then(res => res.text())
-        .then(text => {
-          try {
-            const data = JSON.parse(text);
-            const challengeRecordsDiv = document.getElementById('challengeRecords');
-            challengeRecordsDiv.innerHTML = '';
-            data.slice(1).reverse().forEach(row => {
-              // row: [Timestamp, Challenge ID, Desc, Completed By, Team, Score Adj]
-              const div = document.createElement('div');
-              div.textContent = `Challenge ${row[1]}: ${row[2]} - Completed by ${row[3]} (Team ${row[4]}) [${row[5]} point]`;
-              challengeRecordsDiv.appendChild(div);
-            });
-          } catch (err) {
-            console.error("Error parsing challenge records", err);
-          }
-        });
+    // Show the "golf" rows in the Golf Scores area
+    function displayGolfScores(data) {
+      const golfDiv = document.getElementById('golfScores');
+      golfDiv.innerHTML = '';
+      // Row 0 is headers => skip it with slice(1)
+      data.slice(1).reverse().forEach(row => {
+        // row = [Timestamp, Type, Team, Name, Hole1..Hole9, Total, ChallengeID, ChallengeDesc, ScoreAdj]
+        if (row[1] === "golf") {
+          const holes = row.slice(4, 13).join(", ");
+          const total = row[13];
+          const div = document.createElement('div');
+          div.textContent = `Team ${row[2]} - ${row[3]}: [${holes}] Total: ${total}`;
+          golfDiv.appendChild(div);
+        }
+      });
     }
 
-    // Load challenges from local challenges.txt and show which are completed
+    // Show the "challenge" rows in the Challenge Records area
+    function displayChallengeRecords(data) {
+      const challengeDiv = document.getElementById('challengeRecords');
+      challengeDiv.innerHTML = '';
+      data.slice(1).reverse().forEach(row => {
+        if (row[1] === "challenge") {
+          // row[14] is Challenge ID, row[15] is Desc, row[16] is Score Adj
+          const div = document.createElement('div');
+          div.textContent = `Challenge ${row[14]}: ${row[15]} - Completed by ${row[3]} (Team ${row[2]}) [${row[16]} point]`;
+          challengeDiv.appendChild(div);
+        }
+      });
+    }
+
+    // Load local challenges.txt and mark completed ones
     function loadChallenges() {
-      // First, fetch completed challenges from the sheet
-      fetch(scriptURL + '?sheet=challenges')
+      // First, fetch single sheet for completed challenges
+      fetch(scriptURL)
         .then(res => res.text())
         .then(text => {
           let completed = {};
           try {
             const data = JSON.parse(text);
             data.slice(1).forEach(row => {
-              completed[row[1]] = true; // row[1] is the challenge ID
+              if (row[1] === "challenge") {
+                const cID = row[14]; // challenge ID
+                completed[cID] = true;
+              }
             });
           } catch (err) {
-            console.error("Error reading challenges sheet", err);
+            console.error("Error reading single sheet challenge data", err);
           }
           // Then load local file
           fetch("challenges.txt")
@@ -331,11 +335,10 @@
       .catch(err => console.error(err));
     }
 
-    // Auto-refresh the view tab every 10 seconds when it's active
+    // Auto-refresh the "View" tab every 10 seconds when active
     setInterval(() => {
       if (document.getElementById('view').classList.contains('active')) {
-        fetchGolfScores();
-        fetchChallengeRecords();
+        fetchAllData();
       }
     }, 10000);
   </script>
