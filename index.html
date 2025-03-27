@@ -1,62 +1,57 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Test Google Sheets Connectivity</title>
+  <meta charset="UTF-8">
+  <title>Score Saver</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; }
+    input, button { margin: 0.5em 0; }
+    #scores { margin-top: 1em; border-top: 1px solid #ccc; padding-top: 1em; }
+  </style>
 </head>
 <body>
-  <h1>Test Google Sheets Connectivity</h1>
-  <button onclick="testGet()">Test GET</button>
-  <button onclick="testPost()">Test POST</button>
-  <div id="output" style="background:#f0f0f0; padding:10px; margin-top:10px;"></div>
-  
+  <h1>Submit Your Score</h1>
+  <input type="text" id="name" placeholder="Your name"><br>
+  <input type="number" id="score" placeholder="Your score"><br>
+  <button onclick="submitScore()">Submit</button>
+
+  <div id="scores">
+    <h2>Live Scores</h2>
+    <ul id="scoreList"></ul>
+  </div>
+
   <script>
-    // Replace with your actual Apps Script web app URL
-    const sheetURL = "https://script.google.com/macros/s/AKfycbxTeRnonanU8BIkQcSGxpLj5ZyHHcpRBW6O_yQsKFnIocQtUMzwbzdtcJLmD7dq3_38/exec";
-    
-    function log(message) {
-      const outputDiv = document.getElementById("output");
-      outputDiv.innerHTML += `<p>${message}</p>`;
-      console.log(message);
-    }
-    
-    // Test a GET request (e.g., to fetch the scoreboard)
-    function testGet() {
-      log("Sending GET request...");
-      fetch(`${sheetURL}?action=getScoreboard`)
-        .then(response => response.json())
-        .then(data => {
-          log("GET response received: " + JSON.stringify(data));
-        })
-        .catch(error => {
-          log("Error in GET: " + error);
-        });
-    }
-    
-    // Test a POST request (e.g., to update the scoreboard)
-    function testPost() {
-      log("Sending POST request...");
-      const payload = {
-        action: "updateScoreboard",
-        group: "testGroup",
-        scoreboard: [
-          { player_index: 0, name: "Test Player", scores: [1,2,3,4,5,6,7,8,9] }
-        ]
-      };
-      
-      fetch(sheetURL, {
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwayhFDwpUReTh9qUZP4z3Wyk9yuzgn1IgibiQpZgqj1NtbNrsxBddUsxwGZ6Bt-XuO/exec';
+
+    function submitScore() {
+      const name = document.getElementById('name').value;
+      const score = document.getElementById('score').value;
+      fetch(scriptURL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      .then(response => response.json())
-      .then(data => {
-        log("POST response received: " + JSON.stringify(data));
-      })
-      .catch(error => {
-        log("Error in POST: " + error);
+        body: JSON.stringify({ name, score })
+      }).then(response => {
+        alert("Score submitted!");
+        fetchScores();
       });
     }
+
+    function fetchScores() {
+      fetch(scriptURL)
+        .then(res => res.json())
+        .then(data => {
+          const scoreList = document.getElementById('scoreList');
+          scoreList.innerHTML = '';
+          data.slice(1).reverse().forEach(row => {
+            const li = document.createElement('li');
+            li.textContent = `${row[1]} - ${row[2]} points (on ${new Date(row[0]).toLocaleString()})`;
+            scoreList.appendChild(li);
+          });
+        });
+    }
+
+    // Auto-update every 10 seconds
+    setInterval(fetchScores, 10000);
+    fetchScores();
   </script>
 </body>
 </html>
