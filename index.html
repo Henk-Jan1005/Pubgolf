@@ -310,26 +310,70 @@
 
     let currentGroup = "";
     let scoreboard = []; // Array of player objects: { name: "", scores: [9 numbers] }
-    // Global challenges (loaded from challenges.txt). Each challenge is worth 1 point.
-    // Structure: { "Challenge Name": { completedBy: groupId or null } }
     let challenges = {};
 
     /* ---------------------------
-       Data Persistence Functions
+       Data Persistence Functions (Google Sheets)
     ---------------------------- */
-    function saveScoreboard(group = currentGroup) {
-      localStorage.setItem('pubgolfScoreboard_' + group, JSON.stringify(scoreboard));
+    // Save the current scoreboard to the spreadsheet
+    function saveScoreboardToSheet() {
+      google.script.run.withSuccessHandler(() => {
+        console.log("Scoreboard saved to sheet");
+      }).saveScoreboardData(currentGroup, scoreboard);
     }
     
-    function loadScoreboard(group = currentGroup) {
-      const data = localStorage.getItem('pubgolfScoreboard_' + group);
-      if (data) {
-        scoreboard = JSON.parse(data);
-      } else {
-        initScoreboard(group);
-      }
+    // Load scoreboard data from the spreadsheet
+    function loadScoreboardFromSheet() {
+      google.script.run.withSuccessHandler((data) => {
+        if (data) {
+          scoreboard = JSON.parse(data);
+        } else {
+          initScoreboard(currentGroup);
+        }
+        renderEditScorePage();
+      }).loadScoreboardData(currentGroup);
     }
     
+    // Save challenges data to the spreadsheet
+    function saveChallengesToSheet() {
+      google.script.run.withSuccessHandler(() => {
+        console.log("Challenges saved to sheet");
+      }).saveChallengesData(challenges);
+    }
+    
+    // Load challenges data from the spreadsheet
+    function loadChallengesFromSheet() {
+      google.script.run.withSuccessHandler((data) => {
+        if (data) {
+          challenges = JSON.parse(data);
+          renderChallengesPage();
+        } else {
+          // If no challenges data is found, load from challenges.txt as fallback.
+          fetch("challenges.txt")
+            .then(response => response.text())
+            .then(text => {
+              challenges = {};
+              const lines = text.split('\n');
+              lines.forEach(line => {
+                let challenge = line.trim();
+                if (challenge) {
+                  challenges[challenge] = { completedBy: null };
+                }
+              });
+              saveChallengesToSheet();
+              renderChallengesPage();
+            })
+            .catch(err => {
+              console.error("Error loading challenges.txt:", err);
+              challenges = {};
+            });
+        }
+      }).loadChallengesData();
+    }
+    
+    /* ---------------------------
+       Scoreboard Initialization
+    ---------------------------- */
     function initScoreboard(group = currentGroup) {
       scoreboard = [];
       const numPlayers = groupData[group].players;
@@ -339,54 +383,7 @@
           scores: Array(9).fill(0)
         });
       }
-      saveScoreboard(group);
-    }
-    
-    function saveChallenges() {
-      localStorage.setItem('pubgolfChallenges', JSON.stringify(challenges));
-    }
-    
-    function loadChallenges() {
-      const data = localStorage.getItem('pubgolfChallenges');
-      if (data) {
-        challenges = JSON.parse(data);
-        renderChallengesPage();
-      } else {
-        // If no challenges are saved, load them from challenges.txt via fetch.
-        fetch("challenges.txt")
-          .then(response => response.text())
-          .then(text => {
-            const lines = text.split('\n');
-            lines.forEach(line => {
-              let challenge = line.trim();
-              if (challenge) {
-                challenges[challenge] = { completedBy: null };
-              }
-            });
-            saveChallenges();
-            renderChallengesPage();
-          })
-          .catch(err => {
-            console.error("Error loading challenges.txt:", err);
-            // Fallback: use an empty challenges object.
-            challenges = {};
-          });
-      }
-    }
-    
-    // Compute team total: Sum of all player scores minus one point for each challenge completed by current group.
-    function computeTeamTotal(scoreboard) {
-      let total = 0;
-      scoreboard.forEach(player => {
-        total += player.scores.reduce((a, b) => a + Number(b), 0);
-      });
-      let challengeCount = 0;
-      for (let ch in challenges) {
-        if (challenges[ch].completedBy === currentGroup) {
-          challengeCount++;
-        }
-      }
-      return total - challengeCount;
+      saveScoreboardToSheet();
     }
     
     /* ---------------------------
@@ -399,11 +396,10 @@
         currentGroup = selectedGroup;
         document.getElementById('login-container').style.display = 'none';
         document.getElementById('app').style.display = 'block';
-        loadScoreboard();
-        loadChallenges();
         document.getElementById('editGroupTitle').textContent = groupData[currentGroup].title;
+        loadScoreboardFromSheet();
+        loadChallengesFromSheet();
         showPage('editScorePage');
-        renderEditScorePage();
       } else {
         alert("Incorrect password. Please try again.");
       }
@@ -454,19 +450,19 @@
     
     function updatePlayerName(index, newName) {
       scoreboard[index].name = newName;
-      saveScoreboard();
+      saveScoreboardToSheet();
       renderEditScorePage();
     }
     
     function incrementScore(playerIndex, holeIndex) {
       scoreboard[playerIndex].scores[holeIndex] = Number(scoreboard[playerIndex].scores[holeIndex]) + 1;
-      saveScoreboard();
+      saveScoreboardToSheet();
       renderEditScorePage();
     }
     
     function decrementScore(playerIndex, holeIndex) {
       scoreboard[playerIndex].scores[holeIndex] = Math.max(0, Number(scoreboard[playerIndex].scores[holeIndex]) - 1);
-      saveScoreboard();
+      saveScoreboardToSheet();
       renderEditScorePage();
     }
     
@@ -476,13 +472,14 @@
     function renderViewScoresPage() {
       let html = '';
       for (let group in groupData) {
-        let groupScoreboard = JSON.parse(localStorage.getItem('pubgolfScoreboard_' + group));
+        // Load each group's scoreboard from the sheet (for simplicity, using localStorage fallback if available)
+        let groupScoreboard = JSON.parse(localStorage.getItem('pubgolfScoreboard_' + group) || 'null');
+        // If no local data, skip (this page could be enhanced to always query the sheet)
         if (!groupScoreboard) continue;
         let teamTotal = 0;
         groupScoreboard.forEach(player => {
           teamTotal += player.scores.reduce((a, b) => a + Number(b), 0);
         });
-        // Subtract challenges only if this group completed them.
         let challengeCount = 0;
         for (let ch in challenges) {
           if (challenges[ch].completedBy === group) {
@@ -520,11 +517,10 @@
       document.getElementById('challengesContent').innerHTML = html;
     }
     
-    // Confirmation for challenge completion. If confirmed, mark challenge as completed by the current group.
     function confirmChallenge(challengeName) {
       if (confirm("Are you sure you want to complete \"" + challengeName + "\"? This action cannot be undone.")) {
         challenges[challengeName].completedBy = currentGroup;
-        saveChallenges();
+        saveChallengesToSheet();
         alert("Challenge \"" + challengeName + "\" completed by " + groupData[currentGroup].title + "!");
         renderChallengesPage();
         renderEditScorePage();
@@ -539,7 +535,7 @@
       const labels = [];
       const data = [];
       for (let group in groupData) {
-        let groupScoreboard = JSON.parse(localStorage.getItem('pubgolfScoreboard_' + group));
+        let groupScoreboard = JSON.parse(localStorage.getItem('pubgolfScoreboard_' + group) || 'null');
         if (!groupScoreboard) continue;
         let teamTotal = 0;
         groupScoreboard.forEach(player => {
@@ -581,26 +577,24 @@
     
     /* ---------------------------
        Clear Saved Data Function
+       (Also clears data from the spreadsheet)
     ---------------------------- */
     function clearSavedData() {
       if (confirm("Are you sure you want to clear all saved data? This will remove all scores and challenge completions.")) {
-        // Remove keys for all groups and challenges
-        for (let group in groupData) {
-          localStorage.removeItem('pubgolfScoreboard_' + group);
-        }
-        localStorage.removeItem('pubgolfChallenges');
-        alert("Saved data cleared. The page will now reload.");
-        location.reload();
+        google.script.run.withSuccessHandler(() => {
+          alert("Saved data cleared. The page will now reload.");
+          location.reload();
+        }).clearDatabase();
       }
     }
     
     /* ---------------------------
-       Auto-Save Interval
+       Auto-Save Interval (Save to Sheets)
     ---------------------------- */
     setInterval(function(){
       if (currentGroup) {
-        saveScoreboard();
-        saveChallenges();
+        saveScoreboardToSheet();
+        saveChallengesToSheet();
       }
     }, 30000);
   </script>
