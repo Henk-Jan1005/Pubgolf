@@ -2,63 +2,148 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Score Saver</title>
+  <title>Team Score Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; padding: 2em; }
-    input, button { margin: 0.5em 0; }
-    #scores { margin-top: 1em; border-top: 1px solid #ccc; padding-top: 1em; }
+    body { margin: 0; font-family: sans-serif; }
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background-color: #0077cc;
+      color: white;
+      padding: 10px 0;
+      position: sticky;
+      top: 0;
+    }
+    nav button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.1em;
+    }
+    .tab { display: none; padding: 1em; }
+    .tab.active { display: block; }
+
+    input, select, button {
+      display: block;
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+      font-size: 1em;
+    }
+
+    .score-list { margin-top: 1em; }
+    .score-list div {
+      background: #f4f4f4;
+      margin: 5px 0;
+      padding: 8px;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
-  <h1>Submit Your Score</h1>
-  <input type="text" id="name" placeholder="Your name"><br>
-  <input type="number" id="score" placeholder="Your score"><br>
-  <button onclick="submitScore()">Submit</button>
 
-  <div id="scores">
-    <h2>Live Scores</h2>
-    <ul id="scoreList"></ul>
+  <nav>
+    <button onclick="showTab('edit')">Edit</button>
+    <button onclick="showTab('view')">View</button>
+  </nav>
+
+  <div id="edit" class="tab active">
+    <div id="loginSection">
+      <h2>Login</h2>
+      <select id="teamSelect">
+        <option value="">Select team</option>
+        <option value="1">Team 1</option>
+        <option value="2">Team 2</option>
+        <option value="3">Team 3</option>
+      </select>
+      <button onclick="login()">Login</button>
+    </div>
+
+    <div id="scoreForm" style="display:none;">
+      <h2>Edit Scores</h2>
+      <p>Logged in as <span id="currentTeam"></span></p>
+      <input type="text" id="nameInput" placeholder="Name">
+      <input type="number" id="scoreInput" placeholder="Score">
+      <button onclick="submitScore()">Submit Score</button>
+    </div>
+  </div>
+
+  <div id="view" class="tab">
+    <h2>All Scores</h2>
+    <div id="scores" class="score-list"></div>
   </div>
 
   <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwayhFDwpUReTh9qUZP4z3Wyk9yuzgn1IgibiQpZgqj1NtbNrsxBddUsxwGZ6Bt-XuO/exec';
+    let currentTeam = null;
+
+    function showTab(tabId) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    function login() {
+      const team = document.getElementById('teamSelect').value;
+      if (team) {
+        currentTeam = team;
+        document.getElementById('currentTeam').textContent = `Team ${team}`;
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('scoreForm').style.display = 'block';
+      } else {
+        alert("Select a team to login.");
+      }
+    }
 
     function submitScore() {
-      const name = document.getElementById('name').value;
-      const score = document.getElementById('score').value;
+      const name = document.getElementById('nameInput').value;
+      const score = document.getElementById('scoreInput').value;
+
+      if (!name || !score) {
+        alert("Please fill in both fields.");
+        return;
+      }
+
       fetch(scriptURL, {
         method: 'POST',
-        body: JSON.stringify({ name, score })
-      }).then(response => {
+        body: JSON.stringify({
+          action: "submit",
+          team: currentTeam,
+          name: name,
+          score: score
+        })
+      })
+      .then(res => res.text())
+      .then(() => {
         alert("Score submitted!");
+        document.getElementById('nameInput').value = '';
+        document.getElementById('scoreInput').value = '';
         fetchScores();
       });
     }
 
     function fetchScores() {
-  fetch(scriptURL)
-    .then(response => response.text()) // first get text
-    .then(text => {
-      try {
-        const data = JSON.parse(text);
-        const scoreList = document.getElementById('scoreList');
-        scoreList.innerHTML = '';
+      fetch(scriptURL)
+        .then(res => res.text())
+        .then(text => {
+          try {
+            const data = JSON.parse(text);
+            const scoresDiv = document.getElementById('scores');
+            scoresDiv.innerHTML = '';
 
-        data.slice(1).reverse().forEach(row => {
-          const li = document.createElement('li');
-          li.textContent = `${row[1]} - ${row[2]} points (on ${new Date(row[0]).toLocaleString()})`;
-          scoreList.appendChild(li);
+            data.slice(1).reverse().forEach(row => {
+              const div = document.createElement('div');
+              div.textContent = `Team ${row[1]} - ${row[2]}: ${row[3]} points`;
+              scoresDiv.appendChild(div);
+            });
+          } catch (err) {
+            console.error("Error parsing sheet data", err);
+          }
         });
-      } catch (err) {
-        console.error('Error parsing JSON:', err, text);
-      }
-    });
-}
+    }
 
-
-    // Auto-update every 10 seconds
-    setInterval(fetchScores, 10000);
-    fetchScores();
+    setInterval(fetchScores, 10000); // auto-update every 10s
+    fetchScores(); // load once at start
   </script>
 </body>
 </html>
