@@ -187,12 +187,16 @@
       })
       .then(res => res.text())
       .then(response => {
-        alert(response);
+        alert("RESPONSE: " + response);
         golfScores = Array(9).fill(0);
         generateGolfEditor();
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error(err);
+        alert("ERROR: " + err);
+      });
     }
+
 
     function fetchAllData() {
       fetch(scriptURL)
