@@ -15,7 +15,7 @@
     
     document.getElementById("fetchBtn").addEventListener("click", () => {
       // Using a test group parameter (adjust as needed)
-      fetch(sheetURL + "?action=getScoreboard&group=test")
+      fetch(sheetURL + "?action=getScoreboard")
         .then(response => response.json())
         .then(data => {
           document.getElementById("result").textContent = JSON.stringify(data, null, 2);
