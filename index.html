@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Team Score Tracker</title>
+  <title>Team Golf Score Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { margin: 0; font-family: sans-serif; }
@@ -31,16 +31,28 @@
       font-size: 1em;
       box-sizing: border-box;
     }
-    .score-list div, .golf-list div, .challenge-records div {
+    .hole-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 5px 0;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .hole-label {
+      flex: 1;
+    }
+    .hole-buttons button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      font-size: 1em;
+    }
+    .golf-list div, .challenge-records div {
       background: #f4f4f4;
       margin: 5px 0;
       padding: 8px;
       border-radius: 5px;
-    }
-    .hole-input {
-      width: 30%;
-      display: inline-block;
-      margin-right: 5px;
     }
   </style>
 </head>
@@ -70,28 +82,11 @@
     <div id="editSection" style="display:none;">
       <h2>Welcome, <span id="displayName"></span> (Team <span id="displayTeam"></span>)</h2>
 
-      <!-- Normal Score Submission -->
-      <div id="normalScore">
-        <h3>Submit Normal Score</h3>
-        <input type="number" id="normalScoreInput" placeholder="Score">
-        <button onclick="submitNormalScore()">Submit Normal Score</button>
-      </div>
-
-      <hr>
-
       <!-- Golf Score Editor -->
       <div id="golfScore">
         <h3>Golf Score Editor (9 Holes)</h3>
-        <div id="golfInputs">
-          <input type="number" class="hole-input" id="hole1" placeholder="Hole 1">
-          <input type="number" class="hole-input" id="hole2" placeholder="Hole 2">
-          <input type="number" class="hole-input" id="hole3" placeholder="Hole 3">
-          <input type="number" class="hole-input" id="hole4" placeholder="Hole 4">
-          <input type="number" class="hole-input" id="hole5" placeholder="Hole 5">
-          <input type="number" class="hole-input" id="hole6" placeholder="Hole 6">
-          <input type="number" class="hole-input" id="hole7" placeholder="Hole 7">
-          <input type="number" class="hole-input" id="hole8" placeholder="Hole 8">
-          <input type="number" class="hole-input" id="hole9" placeholder="Hole 9">
+        <div id="golfEditor">
+          <!-- Golf hole rows will be generated here -->
         </div>
         <button onclick="submitGolfScore()">Submit Golf Scores</button>
       </div>
@@ -100,10 +95,7 @@
 
   <!-- View Tab -->
   <div id="view" class="tab">
-    <h2>View Scores & Records</h2>
-    <h3>Normal Scores</h3>
-    <div id="scores" class="score-list"></div>
-    
+    <h2>View Records</h2>
     <h3>Golf Scores</h3>
     <div id="golfScores" class="golf-list"></div>
     
@@ -124,21 +116,65 @@
   </div>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwayhFDwpUReTh9qUZP4z3Wyk9yuzgn1IgibiQpZgqj1NtbNrsxBddUsxwGZ6Bt-XuO/exec';
+    const scriptURL = 'YOUR_SCRIPT_URL_HERE';
     let currentTeam = null;
     let currentName = null;
+    // Initialize golf scores for 9 holes (default value 0)
+    let golfScores = Array(9).fill(0);
+
+    // Generate the golf score editor rows (vertical view)
+    function generateGolfEditor() {
+      const editorDiv = document.getElementById('golfEditor');
+      editorDiv.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'hole-row';
+        
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'hole-label';
+        labelDiv.textContent = 'Hole ' + (i + 1) + ': ';
+        
+        const scoreSpan = document.createElement('span');
+        scoreSpan.id = 'hole' + (i + 1) + '_score';
+        scoreSpan.textContent = golfScores[i];
+        labelDiv.appendChild(scoreSpan);
+        
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'hole-buttons';
+        
+        const minusBtn = document.createElement('button');
+        minusBtn.textContent = '-';
+        minusBtn.onclick = () => updateHoleScore(i, -1);
+        
+        const plusBtn = document.createElement('button');
+        plusBtn.textContent = '+';
+        plusBtn.onclick = () => updateHoleScore(i, 1);
+        
+        buttonsDiv.appendChild(minusBtn);
+        buttonsDiv.appendChild(plusBtn);
+        
+        rowDiv.appendChild(labelDiv);
+        rowDiv.appendChild(buttonsDiv);
+        
+        editorDiv.appendChild(rowDiv);
+      }
+    }
+    
+    // Update a specific hole’s score (score cannot drop below 0)
+    function updateHoleScore(index, delta) {
+      golfScores[index] = Math.max(0, golfScores[index] + delta);
+      document.getElementById('hole' + (index + 1) + '_score').textContent = golfScores[index];
+    }
     
     function showTab(tabId) {
       document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       
-      // Refresh view data if needed
-      if(tabId === 'view'){
-        fetchScores();
+      if (tabId === 'view') {
         fetchGolfScores();
         fetchChallengeRecords();
       }
-      if(tabId === 'challenges'){
+      if (tabId === 'challenges') {
         loadChallenges();
       }
     }
@@ -146,92 +182,40 @@
     function login() {
       const name = document.getElementById('loginName').value;
       const team = document.getElementById('teamSelect').value;
-      if(name && team) {
+      if (name && team) {
         currentName = name;
         currentTeam = team;
         document.getElementById('displayName').textContent = name;
         document.getElementById('displayTeam').textContent = team;
         document.getElementById('loginSection').style.display = 'none';
         document.getElementById('editSection').style.display = 'block';
+        generateGolfEditor();
       } else {
         alert("Please enter your name and select a team.");
       }
     }
     
-    // Submit a normal score
-    function submitNormalScore() {
-      const score = document.getElementById('normalScoreInput').value;
-      if(!score) {
-        alert("Please enter a score.");
-        return;
-      }
-      fetch(scriptURL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: "submitScore",
-          team: currentTeam,
-          name: currentName,
-          score: score
-        })
-      })
-      .then(res => res.text())
-      .then(response => {
-        alert(response);
-        document.getElementById('normalScoreInput').value = '';
-      });
-    }
-    
-    // Submit golf scores (9 holes)
+    // Submit the golf scores (all 9 holes are sent; holes left unchanged remain 0)
     function submitGolfScore() {
-      const holes = [];
-      for(let i = 1; i <= 9; i++){
-        const val = document.getElementById('hole' + i).value;
-        if(val === "") {
-          alert("Please enter score for hole " + i);
-          return;
-        }
-        holes.push(Number(val));
-      }
       fetch(scriptURL, {
         method: 'POST',
         body: JSON.stringify({
           action: "submitGolf",
           team: currentTeam,
           name: currentName,
-          golfScores: holes
+          golfScores: golfScores
         })
       })
       .then(res => res.text())
       .then(response => {
         alert(response);
-        for(let i = 1; i <= 9; i++){
-          document.getElementById('hole' + i).value = '';
-        }
+        // Optionally, reset scores to 0 after submission:
+        golfScores = Array(9).fill(0);
+        generateGolfEditor();
       });
     }
     
-    // Fetch Normal Scores from the Scores sheet
-    function fetchScores() {
-      fetch(scriptURL + '?sheet=scores')
-        .then(res => res.text())
-        .then(text => {
-          try {
-            const data = JSON.parse(text);
-            const scoresDiv = document.getElementById('scores');
-            scoresDiv.innerHTML = '';
-            data.slice(1).reverse().forEach(row => {
-              // row: [Timestamp, Team, Name, Score]
-              const div = document.createElement('div');
-              div.textContent = `Team ${row[1]} - ${row[2]}: ${row[3]} points`;
-              scoresDiv.appendChild(div);
-            });
-          } catch (err) {
-            console.error("Error parsing normal scores", err);
-          }
-        });
-    }
-    
-    // Fetch Golf Scores from the Golf sheet
+    // Fetch Golf Scores from the Golf sheet and display them
     function fetchGolfScores() {
       fetch(scriptURL + '?sheet=golf')
         .then(res => res.text())
@@ -254,7 +238,7 @@
         });
     }
     
-    // Fetch Challenge Records from the Challenges sheet
+    // Fetch Challenge Records from the Challenges sheet and display them
     function fetchChallengeRecords() {
       fetch(scriptURL + '?sheet=challenges')
         .then(res => res.text())
@@ -275,7 +259,7 @@
         });
     }
     
-    // Load challenges from challenges.txt and mark those already completed
+    // Load challenges from challenges.txt (each line is a challenge) and mark already completed ones
     function loadChallenges() {
       // First, fetch completed challenges from the Challenges sheet
       fetch(scriptURL + '?sheet=challenges')
@@ -296,33 +280,30 @@
             .then(text => {
               const challengeListDiv = document.getElementById('challengeList');
               challengeListDiv.innerHTML = '';
-              // Expect each line in the format: challengeId|challenge description
+              // Each line is a challenge; use line number as the challenge ID.
               const lines = text.split('\n').filter(line => line.trim() !== "");
-              lines.forEach(line => {
-                const parts = line.split("|");
-                if(parts.length >= 2) {
-                  const challengeId = parts[0].trim();
-                  const challengeDesc = parts.slice(1).join("|").trim();
-                  const div = document.createElement('div');
-                  div.style.border = "1px solid #ccc";
-                  div.style.padding = "8px";
-                  div.style.marginBottom = "5px";
-                  const p = document.createElement('p');
-                  p.textContent = `Challenge ${challengeId}: ${challengeDesc}`;
-                  div.appendChild(p);
-                  const btn = document.createElement('button');
-                  if(completedChallenges[challengeId]){
-                    btn.textContent = "Completed";
-                    btn.disabled = true;
-                  } else {
-                    btn.textContent = "Complete Challenge";
-                    btn.onclick = function(){
-                      completeChallenge(challengeId, challengeDesc);
-                    }
+              lines.forEach((line, index) => {
+                const challengeId = String(index + 1);
+                const challengeDesc = line.trim();
+                const div = document.createElement('div');
+                div.style.border = "1px solid #ccc";
+                div.style.padding = "8px";
+                div.style.marginBottom = "5px";
+                const p = document.createElement('p');
+                p.textContent = `Challenge ${challengeId}: ${challengeDesc}`;
+                div.appendChild(p);
+                const btn = document.createElement('button');
+                if (completedChallenges[challengeId]) {
+                  btn.textContent = "Completed";
+                  btn.disabled = true;
+                } else {
+                  btn.textContent = "Complete Challenge";
+                  btn.onclick = function() {
+                    completeChallenge(challengeId, challengeDesc);
                   }
-                  div.appendChild(btn);
-                  challengeListDiv.appendChild(div);
                 }
+                div.appendChild(btn);
+                challengeListDiv.appendChild(div);
               });
             });
         });
@@ -330,7 +311,7 @@
     
     // Complete a challenge (each challenge deducts 1 point)
     function completeChallenge(challengeId, challengeDesc) {
-      if(!currentName || !currentTeam) {
+      if (!currentName || !currentTeam) {
         alert("Please login in the Edit tab first.");
         return;
       }
@@ -347,19 +328,17 @@
       .then(res => res.text())
       .then(response => {
         alert(response);
-        loadChallenges(); // refresh the challenge list
+        loadChallenges(); // Refresh the challenge list
       });
     }
     
     // Auto-refresh the view tab every 10 seconds when active
     setInterval(() => {
       if(document.getElementById('view').classList.contains('active')){
-        fetchScores();
         fetchGolfScores();
         fetchChallengeRecords();
       }
     }, 10000);
-    
   </script>
 </body>
 </html>
