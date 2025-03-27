@@ -35,9 +35,15 @@
       font-size: 28px;
       cursor: pointer;
       transition: transform 0.2s;
+      text-align: center;
     }
     nav button:hover {
       transform: scale(1.1);
+    }
+    nav button small {
+      display: block;
+      font-size: 12px;
+      margin-top: 2px;
     }
     /* Content Area */
     #content {
@@ -51,6 +57,12 @@
     h2, h3 {
       text-align: center;
       margin-top: 0;
+    }
+    /* Chart Container */
+    .chart-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
     }
     /* Team Setup Page */
     .team-card {
@@ -152,18 +164,23 @@
   <nav>
     <button onclick="showPage('setupPage')" title="Team Setup">
       <span class="material-icons">group_add</span>
+      <small>Setup</small>
     </button>
     <button onclick="showPage('editScorePage')" title="Edit Scores">
       <span class="material-icons">edit</span>
+      <small>Scores</small>
     </button>
     <button onclick="showPage('scoreGraphPage')" title="Score Graph">
       <span class="material-icons">show_chart</span>
+      <small>Graph</small>
     </button>
     <button onclick="showPage('challengesPage')" title="Challenges">
       <span class="material-icons">emoji_events</span>
+      <small>Chals</small>
     </button>
     <button onclick="clearSavedData()" title="Clear Data">
       <span class="material-icons">delete_forever</span>
+      <small>Clear</small>
     </button>
   </nav>
   
@@ -347,13 +364,20 @@
         });
         html += '</div>';
       });
-      // Display overall team totals
+      // Display overall team totals (subtract one point per challenge completed)
       html += '<h2>Game Totals</h2>';
       teams.forEach(team => {
         let teamTotal = 0;
         team.players.forEach(player => {
           teamTotal += player.scores.reduce((a, b) => a + Number(b), 0);
         });
+        let challengeCount = 0;
+        for (let ch in challenges) {
+          if (challenges[ch].completedBy === team.name) {
+            challengeCount++;
+          }
+        }
+        teamTotal = teamTotal - challengeCount;
         html += '<p><strong>' + team.name + ':</strong> ' + teamTotal + '</p>';
       });
       document.getElementById('editScoreContent').innerHTML = html;
@@ -382,7 +406,7 @@
     // ---------------------------
     function renderScoreGraphPage() {
       let html = '<h2>Score Graph</h2>';
-      html += '<div class="chart-container" style="margin:0 auto;"><canvas id="scoreChart"></canvas></div>';
+      html += '<div class="chart-container"><canvas id="scoreChart"></canvas></div>';
       document.getElementById('scoreGraphContent').innerHTML = html;
       updateChart();
     }
@@ -395,6 +419,13 @@
         team.players.forEach(player => {
           teamTotal += player.scores.reduce((a, b) => a + Number(b), 0);
         });
+        let challengeCount = 0;
+        for (let ch in challenges) {
+          if (challenges[ch].completedBy === team.name) {
+            challengeCount++;
+          }
+        }
+        teamTotal = teamTotal - challengeCount;
         labels.push(team.name);
         data.push(teamTotal);
       });
