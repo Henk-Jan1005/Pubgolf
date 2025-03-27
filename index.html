@@ -310,7 +310,7 @@
 
     let currentGroup = "";
     let scoreboard = []; // Array of player objects: { name: "", scores: [9 numbers] }
-    // Global challenges. Instead of fetching from an external file, we include default challenges locally.
+    // Global challenges object.
     let challenges = {};
 
     /* ---------------------------
@@ -345,24 +345,32 @@
       localStorage.setItem('pubgolfChallenges', JSON.stringify(challenges));
     }
     
-    // Load challenges from localStorage or use default challenges if none exist.
+    // Load challenges from localStorage or, if not available, fetch them from challenges.txt
     function loadChallenges() {
       const data = localStorage.getItem('pubgolfChallenges');
       if (data) {
         challenges = JSON.parse(data);
         renderChallengesPage();
       } else {
-        // Default challenges defined locally.
-        const defaultChallenges = [
-          "Get a birdie on hole 3",
-          "Score a par on hole 5",
-          "Avoid a penalty on hole 7"
-        ];
-        defaultChallenges.forEach(challenge => {
-          challenges[challenge] = { completedBy: null };
-        });
-        saveChallenges();
-        renderChallengesPage();
+        // Load challenges from challenges.txt via fetch
+        fetch("challenges.txt")
+          .then(response => response.text())
+          .then(text => {
+            const lines = text.split('\n');
+            lines.forEach(line => {
+              let challenge = line.trim();
+              if (challenge) {
+                challenges[challenge] = { completedBy: null };
+              }
+            });
+            saveChallenges();
+            renderChallengesPage();
+          })
+          .catch(err => {
+            console.error("Error loading challenges.txt:", err);
+            // Fallback: use an empty challenges object.
+            challenges = {};
+          });
       }
     }
     
