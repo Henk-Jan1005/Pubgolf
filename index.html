@@ -20,10 +20,12 @@
       const score = document.getElementById("score").value;
 
       fetch(sheetURL, {
-        method: "POST",
-        body: JSON.stringify({ naam, score }),
-        headers: { "Content-Type": "application/json" }
-      })
+  method: "POST",
+  mode: "no-cors",
+  body: JSON.stringify({ naam, score }),
+  headers: { "Content-Type": "application/json" }
+})
+
       .then(res => res.text())
       .then(response => {
         console.log("Succes:", response);
