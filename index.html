@@ -5,15 +5,234 @@
   <!-- Ensure proper scaling on mobile devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PUBGOLF Scoreboard</title>
-  <!-- Google Fonts and Material Icons -->
-  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- For offline use, download these fonts locally and update the paths accordingly -->
+  <link href="local-path-to/roboto.css" rel="stylesheet">
+  <link href="local-path-to/material-icons.css" rel="stylesheet">
   <style>
-    /* (Your CSS remains unchanged) */
+    /* Global Styles */
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background: #fafafa;
+      color: #333;
+    }
+    /* Login Container */
+    #login-container {
+      max-width: 600px;
+      margin: 100px auto 30px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    #login-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2575fc;
+    }
+    #login-container select,
+    #login-container input,
+    #login-container button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    #login-container button {
+      background: #2575fc;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #login-container button:hover {
+      background: #1a5ecb;
+    }
+    /* App Container */
+    #app {
+      display: none;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 15px;
+    }
+    /* Fixed Navbar at Top */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      padding: 10px 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    nav button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    nav button:hover {
+      transform: scale(1.1);
+    }
+    /* Content Area (below navbar) */
+    #content {
+      padding: 10px;
+      margin-top: 60px; /* space for navbar */
+    }
+    .page {
+      display: none;
+    }
+    h2, h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+    /* Edit Score Page: Player Cards with ± Buttons */
+    .player-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .player-card label {
+      display: block;
+      margin: 8px 0 4px;
+      font-weight: 500;
+    }
+    .player-card input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .hole-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 6px 0;
+    }
+    .hole-row span {
+      flex: 1;
+      font-weight: 500;
+    }
+    .score-display {
+      width: 40px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .btn-adjust {
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: #2575fc;
+      color: #fff;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .btn-adjust:active {
+      background: #1a5ecb;
+    }
+    .player-total {
+      text-align: center;
+      font-size: 18px;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+    /* View Scores Page: Modern Card Layout */
+    .group-card {
+      background: #fff;
+      border-radius: 12px;
+      margin: 15px 0;
+      padding: 15px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .group-card:hover {
+      transform: scale(1.02);
+    }
+    .group-card h3 {
+      margin-bottom: 10px;
+      color: #2575fc;
+    }
+    .score-item {
+      font-size: 16px;
+      margin: 4px 0;
+    }
+    /* Chart Container */
+    .chart-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    /* Challenges Page Styling */
+    .challenge-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .challenge-card p {
+      margin: 0 0 8px;
+      font-weight: 500;
+    }
+    .challenge-card button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .challenge-card button:hover {
+      background: #218838;
+    }
+    .challenge-completed {
+      font-weight: bold;
+      color: #28a745;
+      text-align: center;
+    }
+    /* Map Page Styling */
+    #mapPage p {
+      text-align: center;
+      font-size: 18px;
+      padding: 20px;
+    }
+    /* Responsive Adjustments */
+    @media (max-width: 600px) {
+      nav button {
+        font-size: 24px;
+      }
+      .btn-adjust {
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- (Your HTML body remains largely unchanged) -->
+  <!-- Login Section -->
   <div id="login-container">
     <h2>Login</h2>
     <select id="groupSelect">
@@ -25,17 +244,61 @@
     <button onclick="login()">Login</button>
   </div>
   
-  <div id="app" style="display:none;">
-    <!-- Fixed Navbar, Content Areas, etc. -->
-    <!-- (Same HTML for navigation and content pages as before) -->
+  <!-- Main App Container -->
+  <div id="app">
+    <!-- Fixed Navigation Bar -->
+    <nav>
+      <button onclick="showPage('editScorePage')" title="Edit Score">
+        <span class="material-icons">edit</span>
+      </button>
+      <button onclick="showPage('viewScoresPage')" title="View Scores">
+        <span class="material-icons">bar_chart</span>
+      </button>
+      <button onclick="showPage('mapPage')" title="Map">
+        <span class="material-icons">map</span>
+      </button>
+      <button onclick="showPage('challengesPage')" title="Challenges">
+        <span class="material-icons">emoji_events</span>
+      </button>
+      <button onclick="clearSavedData()" title="Clear Saved Data">
+        <span class="material-icons">delete_forever</span>
+      </button>
+    </nav>
+    
+    <!-- Content Area -->
+    <div id="content">
+      <!-- Edit Score Page -->
+      <div id="editScorePage" class="page">
+        <h2>Edit Score - <span id="editGroupTitle"></span></h2>
+        <div id="editScoreContent"></div>
+      </div>
+      
+      <!-- View Scores Page -->
+      <div id="viewScoresPage" class="page">
+        <h2>View All Scores</h2>
+        <div class="chart-container">
+          <canvas id="scoreChart"></canvas>
+        </div>
+        <div id="viewScoresContent"></div>
+      </div>
+      
+      <!-- Map Page -->
+      <div id="mapPage" class="page">
+        <h2>Map</h2>
+        <p>Map coming soon.</p>
+      </div>
+      
+      <!-- Challenges Page -->
+      <div id="challengesPage" class="page">
+        <h2>Challenges</h2>
+        <div id="challengesContent"></div>
+      </div>
+    </div>
   </div>
   
-  <!-- Include Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Include Chart.js locally for offline use. Download the file and update the src accordingly -->
+  <script src="local-path-to/chart.js"></script>
   <script>
-    // Set your API URL here (the one you provided)
-    const API_URL = "https://script.google.com/macros/s/AKfycbwayhFDwpUReTh9qUZP4z3Wyk9yuzgn1IgibiQpZgqj1NtbNrsxBddUsxwGZ6Bt-XuO/exec";
-
     /* ---------------------------
        Global Configuration
     ---------------------------- */
@@ -47,105 +310,25 @@
 
     let currentGroup = "";
     let scoreboard = []; // Array of player objects: { name: "", scores: [9 numbers] }
+    // Global challenges. Instead of fetching from an external file, we include default challenges locally.
     let challenges = {};
 
-    // ---------------------------
-    // API-Based Data Persistence Functions
-    // ---------------------------
-    function saveScoreboardToSheet() {
-      fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'saveScoreboard',
-          group: currentGroup,
-          scoreboard: scoreboard
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        console.log("Scoreboard saved:", data);
-      })
-      .catch(err => console.error(err));
+    /* ---------------------------
+       Data Persistence Functions
+    ---------------------------- */
+    function saveScoreboard(group = currentGroup) {
+      localStorage.setItem('pubgolfScoreboard_' + group, JSON.stringify(scoreboard));
     }
-
-    function loadScoreboardFromSheet() {
-      fetch(`${API_URL}?action=loadScoreboard&group=${currentGroup}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.scoreboard) {
-          scoreboard = data.scoreboard;
-        } else {
-          initScoreboard(currentGroup);
-        }
-        renderEditScorePage();
-      })
-      .catch(err => console.error(err));
-    }
-
-    function saveChallengesToSheet() {
-      fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'saveChallenges',
-          challenges: challenges
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        console.log("Challenges saved:", data);
-      })
-      .catch(err => console.error(err));
-    }
-
-    function loadChallengesFromSheet() {
-      fetch(`${API_URL}?action=loadChallenges`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.challenges) {
-          challenges = data.challenges;
-          renderChallengesPage();
-        } else {
-          // Fallback: load from challenges.txt
-          fetch("challenges.txt")
-            .then(response => response.text())
-            .then(text => {
-              challenges = {};
-              const lines = text.split('\n');
-              lines.forEach(line => {
-                let challenge = line.trim();
-                if (challenge) {
-                  challenges[challenge] = { completedBy: null };
-                }
-              });
-              saveChallengesToSheet();
-              renderChallengesPage();
-            })
-            .catch(err => {
-              console.error("Error loading challenges.txt:", err);
-              challenges = {};
-            });
-        }
-      })
-      .catch(err => console.error(err));
-    }
-
-    function clearSavedData() {
-      if (confirm("Are you sure you want to clear all saved data? This will remove all scores and challenge completions.")) {
-        fetch(`${API_URL}?action=clearDatabase`)
-          .then(response => response.json())
-          .then(data => {
-            alert("Saved data cleared. The page will now reload.");
-            location.reload();
-          })
-          .catch(err => console.error(err));
+    
+    function loadScoreboard(group = currentGroup) {
+      const data = localStorage.getItem('pubgolfScoreboard_' + group);
+      if (data) {
+        scoreboard = JSON.parse(data);
+      } else {
+        initScoreboard(group);
       }
     }
-
-    // ---------------------------
-    // Scoreboard Initialization and Calculation
-    // ---------------------------
+    
     function initScoreboard(group = currentGroup) {
       scoreboard = [];
       const numPlayers = groupData[group].players;
@@ -155,9 +338,35 @@
           scores: Array(9).fill(0)
         });
       }
-      saveScoreboardToSheet();
+      saveScoreboard(group);
     }
-
+    
+    function saveChallenges() {
+      localStorage.setItem('pubgolfChallenges', JSON.stringify(challenges));
+    }
+    
+    // Load challenges from localStorage or use default challenges if none exist.
+    function loadChallenges() {
+      const data = localStorage.getItem('pubgolfChallenges');
+      if (data) {
+        challenges = JSON.parse(data);
+        renderChallengesPage();
+      } else {
+        // Default challenges defined locally.
+        const defaultChallenges = [
+          "Get a birdie on hole 3",
+          "Score a par on hole 5",
+          "Avoid a penalty on hole 7"
+        ];
+        defaultChallenges.forEach(challenge => {
+          challenges[challenge] = { completedBy: null };
+        });
+        saveChallenges();
+        renderChallengesPage();
+      }
+    }
+    
+    // Compute team total: Sum of all player scores minus one point for each challenge completed by current group.
     function computeTeamTotal(scoreboard) {
       let total = 0;
       scoreboard.forEach(player => {
@@ -171,10 +380,10 @@
       }
       return total - challengeCount;
     }
-
-    // ---------------------------
-    // Login and Navigation Functions
-    // ---------------------------
+    
+    /* ---------------------------
+       Login Function
+    ---------------------------- */
     function login() {
       const selectedGroup = document.getElementById('groupSelect').value;
       const enteredPassword = document.getElementById('password').value;
@@ -182,15 +391,19 @@
         currentGroup = selectedGroup;
         document.getElementById('login-container').style.display = 'none';
         document.getElementById('app').style.display = 'block';
+        loadScoreboard();
+        loadChallenges();
         document.getElementById('editGroupTitle').textContent = groupData[currentGroup].title;
-        loadScoreboardFromSheet();
-        loadChallengesFromSheet();
         showPage('editScorePage');
+        renderEditScorePage();
       } else {
         alert("Incorrect password. Please try again.");
       }
     }
-
+    
+    /* ---------------------------
+       Navigation Functions
+    ---------------------------- */
     function showPage(pageId) {
       const pages = document.getElementsByClassName('page');
       for (let page of pages) {
@@ -205,10 +418,10 @@
         renderChallengesPage();
       }
     }
-
-    // ---------------------------
-    // Edit Score Page Functions
-    // ---------------------------
+    
+    /* ---------------------------
+       Edit Score Page (Vertical Layout with ± Buttons)
+    ---------------------------- */
     function renderEditScorePage() {
       let html = '';
       scoreboard.forEach((player, pIndex) => {
@@ -230,33 +443,32 @@
       html += '<p style="text-align:center; font-size:20px; font-weight:bold; color:#2575fc;">Team Final Score: ' + teamTotal + '</p>';
       document.getElementById('editScoreContent').innerHTML = html;
     }
-
+    
     function updatePlayerName(index, newName) {
       scoreboard[index].name = newName;
-      saveScoreboardToSheet();
+      saveScoreboard();
       renderEditScorePage();
     }
-
+    
     function incrementScore(playerIndex, holeIndex) {
       scoreboard[playerIndex].scores[holeIndex] = Number(scoreboard[playerIndex].scores[holeIndex]) + 1;
-      saveScoreboardToSheet();
+      saveScoreboard();
       renderEditScorePage();
     }
-
+    
     function decrementScore(playerIndex, holeIndex) {
       scoreboard[playerIndex].scores[holeIndex] = Math.max(0, Number(scoreboard[playerIndex].scores[holeIndex]) - 1);
-      saveScoreboardToSheet();
+      saveScoreboard();
       renderEditScorePage();
     }
-
-    // ---------------------------
-    // View Scores and Challenges Page Functions
-    // ---------------------------
+    
+    /* ---------------------------
+       View Scores Page (Modern Card Layout)
+    ---------------------------- */
     function renderViewScoresPage() {
       let html = '';
       for (let group in groupData) {
-        // For simplicity, this example still uses localStorage as a fallback.
-        let groupScoreboard = JSON.parse(localStorage.getItem('pubgolfScoreboard_' + group) || 'null');
+        let groupScoreboard = JSON.parse(localStorage.getItem('pubgolfScoreboard_' + group));
         if (!groupScoreboard) continue;
         let teamTotal = 0;
         groupScoreboard.forEach(player => {
@@ -280,7 +492,10 @@
       document.getElementById('viewScoresContent').innerHTML = html;
       updateChart();
     }
-
+    
+    /* ---------------------------
+       Challenges Page (Global: Once Per Group)
+    ---------------------------- */
     function renderChallengesPage() {
       let html = '';
       for (let challenge in challenges) {
@@ -295,26 +510,26 @@
       }
       document.getElementById('challengesContent').innerHTML = html;
     }
-
+    
     function confirmChallenge(challengeName) {
       if (confirm("Are you sure you want to complete \"" + challengeName + "\"? This action cannot be undone.")) {
         challenges[challengeName].completedBy = currentGroup;
-        saveChallengesToSheet();
+        saveChallenges();
         alert("Challenge \"" + challengeName + "\" completed by " + groupData[currentGroup].title + "!");
         renderChallengesPage();
         renderEditScorePage();
       }
     }
-
-    // ---------------------------
-    // Chart Update Function
-    // ---------------------------
+    
+    /* ---------------------------
+       Graph: Update Chart (View Scores Page)
+    ---------------------------- */
     let scoreChart;
     function updateChart() {
       const labels = [];
       const data = [];
       for (let group in groupData) {
-        let groupScoreboard = JSON.parse(localStorage.getItem('pubgolfScoreboard_' + group) || 'null');
+        let groupScoreboard = JSON.parse(localStorage.getItem('pubgolfScoreboard_' + group));
         if (!groupScoreboard) continue;
         let teamTotal = 0;
         groupScoreboard.forEach(player => {
@@ -353,14 +568,28 @@
         }
       });
     }
-
-    // ---------------------------
-    // Auto-Save Interval
-    // ---------------------------
+    
+    /* ---------------------------
+       Clear Saved Data Function
+    ---------------------------- */
+    function clearSavedData() {
+      if (confirm("Are you sure you want to clear all saved data? This will remove all scores and challenge completions.")) {
+        for (let group in groupData) {
+          localStorage.removeItem('pubgolfScoreboard_' + group);
+        }
+        localStorage.removeItem('pubgolfChallenges');
+        alert("Saved data cleared. The page will now reload.");
+        location.reload();
+      }
+    }
+    
+    /* ---------------------------
+       Auto-Save Interval
+    ---------------------------- */
     setInterval(function(){
       if (currentGroup) {
-        saveScoreboardToSheet();
-        saveChallengesToSheet();
+        saveScoreboard();
+        saveChallenges();
       }
     }, 30000);
   </script>
