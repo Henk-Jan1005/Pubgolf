@@ -217,6 +217,15 @@
       font-size: 18px;
       padding: 20px;
     }
+    #debug {
+      background: #fee;
+      border: 1px solid #faa;
+      padding: 10px;
+      margin: 10px;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
     @media (max-width: 600px) {
       nav button {
         font-size: 24px;
@@ -292,13 +301,25 @@
         <div id="challengesContent"></div>
       </div>
     </div>
+    
+    <!-- Debug Information -->
+    <div id="debug"></div>
   </div>
   
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     /***************************************************************
-     * Configuratie: Google Apps Script endpoint (Google Sheets als database)
+     * Debug Logging Function
+     ***************************************************************/
+    function logDebug(message) {
+      console.log(message);
+      const debugDiv = document.getElementById("debug");
+      debugDiv.innerHTML += `<p>${new Date().toLocaleTimeString()}: ${message}</p>`;
+    }
+    
+    /***************************************************************
+     * Configuratie: Google Apps Script endpoint
      ***************************************************************/
     const sheetURL = "https://script.google.com/macros/s/AKfycbxTeRnonanU8BIkQcSGxpLj5ZyHHcpRBW6O_yQsKFnIocQtUMzwbzdtcJLmD7dq3_38/exec";
     
@@ -322,11 +343,15 @@
      ***************************************************************/
     // Haal scoreboard op voor de huidige groep
     function loadScoreboard(group = currentGroup) {
+      logDebug("Loading scoreboard for group: " + group);
       fetch(`${sheetURL}?action=getScoreboard&group=${group}`)
-        .then(response => response.json())
+        .then(response => {
+          logDebug("Scoreboard response received");
+          return response.json();
+        })
         .then(data => {
+          logDebug("Scoreboard data: " + JSON.stringify(data));
           if (Array.isArray(data)) {
-            // Eerste keer: als er nog geen data bestaat, initialiseer dan
             if (!isScoreboardInitialized) {
               if (data.length === 0) {
                 initScoreboard(group);
@@ -343,6 +368,7 @@
           renderEditScorePage();
         })
         .catch(error => {
+          logDebug("Error loading scoreboard: " + error);
           console.error("Error loading scoreboard:", error);
           renderEditScorePage();
         });
@@ -350,6 +376,7 @@
     
     // Initialiseer een nieuw scoreboard en sla dit op
     function initScoreboard(group = currentGroup) {
+      logDebug("Initializing new scoreboard for group: " + group);
       scoreboard = [];
       const numPlayers = groupData[group].players;
       for (let i = 0; i < numPlayers; i++) {
@@ -364,6 +391,7 @@
     
     // Sla het scoreboard op via Google Sheets (Apps Script)
     function saveScoreboardToDB() {
+      logDebug("Saving scoreboard to DB: " + JSON.stringify(scoreboard));
       fetch(sheetURL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -374,23 +402,37 @@
         })
       })
       .then(response => response.json())
-      .then(data => console.log("Scoreboard saved", data))
-      .catch(error => console.error("Error saving scoreboard:", error));
+      .then(data => {
+        logDebug("Scoreboard saved: " + JSON.stringify(data));
+      })
+      .catch(error => {
+        logDebug("Error saving scoreboard: " + error);
+        console.error("Error saving scoreboard:", error);
+      });
     }
     
     // Haal challenges op via Google Sheets (Apps Script)
     function fetchChallenges() {
+      logDebug("Fetching challenges");
       fetch(`${sheetURL}?action=getChallenges`)
-        .then(response => response.json())
+        .then(response => {
+          logDebug("Challenges response received");
+          return response.json();
+        })
         .then(data => {
           challenges = data || {};
+          logDebug("Challenges data: " + JSON.stringify(challenges));
           renderChallengesPage();
         })
-        .catch(error => console.error("Error fetching challenges:", error));
+        .catch(error => {
+          logDebug("Error fetching challenges: " + error);
+          console.error("Error fetching challenges:", error);
+        });
     }
     
     // Sla challenges op via Google Sheets (Apps Script)
     function saveChallengesToDB() {
+      logDebug("Saving challenges: " + JSON.stringify(challenges));
       fetch(sheetURL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -400,13 +442,17 @@
         })
       })
       .then(response => response.json())
-      .then(data => console.log("Challenges saved", data))
-      .catch(error => console.error("Error saving challenges:", error));
+      .then(data => logDebug("Challenges saved: " + JSON.stringify(data)))
+      .catch(error => {
+        logDebug("Error saving challenges: " + error);
+        console.error("Error saving challenges:", error);
+      });
     }
     
-    // Verwijder data voor de huidige groep en globale challenges via Google Sheets (Apps Script)
+    // Verwijder data via Google Sheets (Apps Script)
     function clearData() {
       if (confirm("Are you sure you want to clear all data? This will remove all scores and challenge completions.")) {
+        logDebug("Clearing data for group: " + currentGroup);
         fetch(sheetURL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -416,15 +462,19 @@
           })
         })
         .then(() => {
+          logDebug("Data cleared, reloading page.");
           alert("Data cleared. The page will now reload.");
           location.reload();
         })
-        .catch(error => console.error("Error clearing data:", error));
+        .catch(error => {
+          logDebug("Error clearing data: " + error);
+          console.error("Error clearing data:", error);
+        });
       }
     }
     
     /***************************************************************
-     * Polling (optioneel): Ververs elke 5 seconden de data
+     * Polling: Ververs elke 5 seconden de data
      ***************************************************************/
     function pollData() {
       setInterval(() => {
@@ -441,14 +491,16 @@
       const enteredPassword = document.getElementById('password').value;
       if (enteredPassword === groupData[selectedGroup].password) {
         currentGroup = selectedGroup;
+        logDebug("Login successful for group: " + currentGroup);
         document.getElementById('login-container').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         document.getElementById('editGroupTitle').textContent = groupData[currentGroup].title;
         loadScoreboard(currentGroup);
         fetchChallenges();
-        pollData();  // Start polling na login
+        pollData();
         showPage('editScorePage');
       } else {
+        logDebug("Incorrect password for group: " + selectedGroup);
         alert("Incorrect password. Please try again.");
       }
     }
@@ -495,6 +547,7 @@
     }
     
     function updatePlayerName(index, newName) {
+      logDebug("Updating player " + index + " name to: " + newName);
       scoreboard[index].name = newName;
       saveScoreboardToDB();
       renderEditScorePage();
@@ -502,12 +555,14 @@
     
     function incrementScore(playerIndex, holeIndex) {
       scoreboard[playerIndex].scores[holeIndex] = Number(scoreboard[playerIndex].scores[holeIndex]) + 1;
+      logDebug("Incremented score for player " + playerIndex + " on hole " + holeIndex);
       saveScoreboardToDB();
       renderEditScorePage();
     }
     
     function decrementScore(playerIndex, holeIndex) {
       scoreboard[playerIndex].scores[holeIndex] = Math.max(0, Number(scoreboard[playerIndex].scores[holeIndex]) - 1);
+      logDebug("Decremented score for player " + playerIndex + " on hole " + holeIndex);
       saveScoreboardToDB();
       renderEditScorePage();
     }
@@ -566,6 +621,7 @@
             }
           })
           .catch(error => {
+            logDebug("Error fetching group " + group + ": " + error);
             console.error("Error fetching group", group, error);
             groupsProcessed++;
             if (groupsProcessed === groups.length) {
@@ -594,6 +650,7 @@
     
     function confirmChallenge(challengeName) {
       if (confirm("Are you sure you want to complete \"" + challengeName + "\"? This action cannot be undone.")) {
+        logDebug("Completing challenge: " + challengeName);
         challenges[challengeName].completedBy = currentGroup;
         saveChallengesToDB();
         alert("Challenge \"" + challengeName + "\" completed by " + groupData[currentGroup].title + "!");
@@ -634,6 +691,7 @@
             if (groupsProcessed === groups.length) drawChart(labels, data);
           })
           .catch(error => {
+            logDebug("Error updating chart for group " + group + ": " + error);
             console.error("Error updating chart for group", group, error);
             groupsProcessed++;
             if (groupsProcessed === groups.length) drawChart(labels, data);
@@ -663,6 +721,7 @@
           }
         }
       });
+      logDebug("Chart drawn with labels: " + JSON.stringify(labels) + " and data: " + JSON.stringify(data));
     }
   </script>
 </body>
