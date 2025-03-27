@@ -36,18 +36,25 @@
     }
 
     function fetchScores() {
-      fetch(scriptURL)
-        .then(res => res.json())
-        .then(data => {
-          const scoreList = document.getElementById('scoreList');
-          scoreList.innerHTML = '';
-          data.slice(1).reverse().forEach(row => {
-            const li = document.createElement('li');
-            li.textContent = `${row[1]} - ${row[2]} points (on ${new Date(row[0]).toLocaleString()})`;
-            scoreList.appendChild(li);
-          });
+  fetch(scriptURL)
+    .then(response => response.text()) // first get text
+    .then(text => {
+      try {
+        const data = JSON.parse(text);
+        const scoreList = document.getElementById('scoreList');
+        scoreList.innerHTML = '';
+
+        data.slice(1).reverse().forEach(row => {
+          const li = document.createElement('li');
+          li.textContent = `${row[1]} - ${row[2]} points (on ${new Date(row[0]).toLocaleString()})`;
+          scoreList.appendChild(li);
         });
-    }
+      } catch (err) {
+        console.error('Error parsing JSON:', err, text);
+      }
+    });
+}
+
 
     // Auto-update every 10 seconds
     setInterval(fetchScores, 10000);
