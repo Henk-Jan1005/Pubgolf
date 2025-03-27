@@ -23,11 +23,13 @@
         method: "POST",
         body: JSON.stringify({ naam, score }),
         headers: { "Content-Type": "application/json" }
-      }).then(res => res.text())
-        .then(res => {
-          console.log("Succes:", res);
-          getScores(); // refresh lijst
-        });
+      })
+      .then(res => res.text())
+      .then(response => {
+        console.log("Succes:", response);
+        getScores(); // lijst vernieuwen
+      })
+      .catch(error => console.error("Fout bij opslaan:", error));
     }
 
     function getScores() {
@@ -36,15 +38,17 @@
         .then(data => {
           const lijst = document.getElementById("scorelijst");
           lijst.innerHTML = "";
-          data.forEach(score => {
+          data.forEach(item => {
             const li = document.createElement("li");
-            li.textContent = ${score.naam}: ${score.score};
+            li.textContent = `${item.naam}: ${item.score}`;
             lijst.appendChild(li);
           });
-        });
+        })
+        .catch(error => console.error("Fout bij ophalen:", error));
     }
 
-    getScores(); // laad direct scores bij openen
+    // Direct bij laden de scores ophalen
+    getScores();
   </script>
 </body>
 </html>
