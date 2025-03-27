@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Golf Scores Bijhouden</title>
+  <title>Golf Scores & Challenges</title>
   <style>
-    /* Basis styling */
+    /* Basis styling en layout */
     body {
       font-family: Arial, sans-serif;
       background: #f2f2f2;
@@ -13,15 +13,30 @@
       padding: 20px;
     }
     .container {
-      max-width: 600px;
+      max-width: 800px;
       margin: auto;
       background: #fff;
       padding: 20px;
       border-radius: 5px;
     }
-    h1 {
+    h1, h3 {
+      text-align: center;
+    }
+    .nav {
       text-align: center;
       margin-bottom: 20px;
+    }
+    .nav button {
+      padding: 10px 15px;
+      margin: 5px;
+      background: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .nav button:hover {
+      background: #0056b3;
     }
     form {
       display: grid;
@@ -30,22 +45,39 @@
     label {
       font-weight: bold;
     }
-    input[type="text"], input[type="number"] {
+    input[type="text"],
+    input[type="number"],
+    select {
       width: 100%;
       padding: 8px;
       box-sizing: border-box;
     }
-    button {
+    button[type="submit"] {
       padding: 10px;
-      background: #007BFF;
+      background: #28a745;
       color: #fff;
       border: none;
       border-radius: 3px;
       cursor: pointer;
       font-size: 16px;
     }
-    button:hover {
-      background: #0056b3;
+    button[type="submit"]:hover {
+      background: #1e7e34;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+    .section {
+      display: none;
     }
     #result {
       margin-top: 20px;
@@ -59,71 +91,206 @@
 </head>
 <body>
   <div class="container">
-    <h1>Golf Scores Bijhouden</h1>
-    <form id="scoreForm">
-      <label for="playerName">Speler Naam:</label>
-      <input type="text" id="playerName" name="playerName" required>
+    <h1>Golf Scores & Challenges</h1>
+    <div class="nav">
+      <button id="navScoreEntry">Score Entry</button>
+      <button id="navScoreboard">Scoreboard</button>
+      <button id="navChallenges">Challenges</button>
+    </div>
 
-      <!-- Inputvelden voor de 9 holes -->
-      <label for="hole1">Hole 1:</label>
-      <input type="number" id="hole1" name="hole1" required>
-      <label for="hole2">Hole 2:</label>
-      <input type="number" id="hole2" name="hole2" required>
-      <label for="hole3">Hole 3:</label>
-      <input type="number" id="hole3" name="hole3" required>
-      <label for="hole4">Hole 4:</label>
-      <input type="number" id="hole4" name="hole4" required>
-      <label for="hole5">Hole 5:</label>
-      <input type="number" id="hole5" name="hole5" required>
-      <label for="hole6">Hole 6:</label>
-      <input type="number" id="hole6" name="hole6" required>
-      <label for="hole7">Hole 7:</label>
-      <input type="number" id="hole7" name="hole7" required>
-      <label for="hole8">Hole 8:</label>
-      <input type="number" id="hole8" name="hole8" required>
-      <label for="hole9">Hole 9:</label>
-      <input type="number" id="hole9" name="hole9" required>
+    <!-- Score Entry Sectie -->
+    <div id="scoreEntrySection" class="section" style="display:block;">
+      <form id="scoreEntryForm">
+        <label for="group">Groep:</label>
+        <select id="group" name="group" required>
+          <option value="">Selecteer groep</option>
+          <option value="group1">Group 1</option>
+          <option value="group2">Group 2</option>
+          <option value="group3">Group 3</option>
+        </select>
+        <label for="playerName">Speler Naam:</label>
+        <input type="text" id="playerName" name="playerName" required>
 
-      <button type="submit">Opslaan</button>
-    </form>
+        <!-- Invoer voor 9 holes -->
+        <label for="hole1">Hole 1:</label>
+        <input type="number" id="hole1" name="hole1" required>
+        <label for="hole2">Hole 2:</label>
+        <input type="number" id="hole2" name="hole2" required>
+        <label for="hole3">Hole 3:</label>
+        <input type="number" id="hole3" name="hole3" required>
+        <label for="hole4">Hole 4:</label>
+        <input type="number" id="hole4" name="hole4" required>
+        <label for="hole5">Hole 5:</label>
+        <input type="number" id="hole5" name="hole5" required>
+        <label for="hole6">Hole 6:</label>
+        <input type="number" id="hole6" name="hole6" required>
+        <label for="hole7">Hole 7:</label>
+        <input type="number" id="hole7" name="hole7" required>
+        <label for="hole8">Hole 8:</label>
+        <input type="number" id="hole8" name="hole8" required>
+        <label for="hole9">Hole 9:</label>
+        <input type="number" id="hole9" name="hole9" required>
+
+        <button type="submit">Score Opslaan</button>
+      </form>
+    </div>
+
+    <!-- Scoreboard Sectie -->
+    <div id="scoreboardSection" class="section">
+      <button id="loadScoreboardBtn">Laad Scoreboard</button>
+      <div id="scoreboardResult"></div>
+    </div>
+
+    <!-- Challenges Sectie -->
+    <div id="challengesSection" class="section">
+      <button id="loadChallengesBtn">Laad Challenges</button>
+      <div id="challengesResult"></div>
+      <form id="challengeForm">
+        <label for="challengeName">Challenge Naam:</label>
+        <input type="text" id="challengeName" name="challengeName" required>
+        <label for="completedBy">Completed By:</label>
+        <input type="text" id="completedBy" name="completedBy" required>
+        <button type="submit">Challenge Opslaan</button>
+      </form>
+    </div>
+
+    <!-- Algemene resultaatweergave -->
     <div id="result"></div>
   </div>
 
   <script>
-    document.getElementById('scoreForm').addEventListener('submit', function(e) {
-      e.preventDefault();
+    // NAVIGATIE: Wissel tussen de secties
+    document.getElementById('navScoreEntry').addEventListener('click', function() {
+      showSection('scoreEntrySection');
+    });
+    document.getElementById('navScoreboard').addEventListener('click', function() {
+      showSection('scoreboardSection');
+    });
+    document.getElementById('navChallenges').addEventListener('click', function() {
+      showSection('challengesSection');
+    });
+    function showSection(sectionId) {
+      var sections = document.getElementsByClassName('section');
+      for (var i = 0; i < sections.length; i++) {
+        sections[i].style.display = 'none';
+      }
+      document.getElementById(sectionId).style.display = 'block';
+    }
 
-      // Verzamel de ingevoerde data
+    // Vervang deze URL door die van jouw gedeployde Google Apps Script
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwayhFDwpUReTh9qUZP4z3Wyk9yuzgn1IgibiQpZgqj1NtbNrsxBddUsxwGZ6Bt-XuO/exec';
+
+    // Score Entry: Verstuur scoregegevens (actie: save_score)
+    document.getElementById('scoreEntryForm').addEventListener('submit', function(e) {
+      e.preventDefault();
       const form = e.target;
+      const group = form.group.value;
       const spelerNaam = form.playerName.value;
       const scores = [];
       for (let i = 1; i <= 9; i++) {
         scores.push(form['hole' + i].value);
       }
-
-      // Data die verstuurd wordt naar de Google Apps Script
       const data = {
+        action: 'save_score',
+        group: group,
         speler: spelerNaam,
         scores: scores
       };
-
-      // Vervang onderstaande URL door jouw eigen Google Apps Script URL
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbwayhFDwpUReTh9qUZP4z3Wyk9yuzgn1IgibiQpZgqj1NtbNrsxBddUsxwGZ6Bt-XuO/exec';
-
       fetch(scriptURL, {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
       .then(response => response.json())
       .then(result => {
-        // Update de pagina met de teruggegeven data
         document.getElementById('result').innerText = JSON.stringify(result, null, 2);
+        form.reset();
       })
       .catch(error => {
-        console.error('Fout bij verzenden:', error);
-        document.getElementById('result').innerText = 'Er is een fout opgetreden. Probeer het later opnieuw.';
+        console.error('Fout bij score opslaan:', error);
+        document.getElementById('result').innerText = 'Er is een fout opgetreden bij het opslaan van de score.';
+      });
+    });
+
+    // Scoreboard: Laad de scoregegevens (verwacht dat de response een object bevat met "scoreboards")
+    document.getElementById('loadScoreboardBtn').addEventListener('click', function() {
+      fetch(scriptURL + '?action=load_data')
+      .then(response => response.json())
+      .then(result => {
+        let html = '';
+        // Voor elke groep de scoreboard weergeven
+        for (const group in result.scoreboards) {
+          html += '<h3>' + group + '</h3>';
+          html += '<table>';
+          html += '<tr><th>Index</th><th>Naam</th><th>Hole1</th><th>Hole2</th><th>Hole3</th><th>Hole4</th><th>Hole5</th><th>Hole6</th><th>Hole7</th><th>Hole8</th><th>Hole9</th></tr>';
+          result.scoreboards[group].forEach(function(row) {
+            html += '<tr>';
+            html += '<td>' + row.player_index + '</td>';
+            html += '<td>' + row.player_name + '</td>';
+            for (let i = 1; i <= 9; i++) {
+              html += '<td>' + row['hole' + i] + '</td>';
+            }
+            html += '</tr>';
+          });
+          html += '</table>';
+        }
+        document.getElementById('scoreboardResult').innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Fout bij laden van scoreboard:', error);
+        document.getElementById('scoreboardResult').innerText = 'Er is een fout opgetreden bij het laden van het scoreboard.';
+      });
+    });
+
+    // Challenges: Laad challenge-gegevens (verondersteld dat result.challenges een array is)
+    document.getElementById('loadChallengesBtn').addEventListener('click', function() {
+      fetch(scriptURL + '?action=load_data')
+      .then(response => response.json())
+      .then(result => {
+        let html = '<h3>Challenges</h3>';
+        html += '<table>';
+        html += '<tr><th>Challenge Naam</th><th>Completed By</th></tr>';
+        result.challenges.forEach(function(challenge) {
+          html += '<tr>';
+          html += '<td>' + challenge.challenge_name + '</td>';
+          html += '<td>' + challenge.completed_by + '</td>';
+          html += '</tr>';
+        });
+        html += '</table>';
+        document.getElementById('challengesResult').innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Fout bij laden van challenges:', error);
+        document.getElementById('challengesResult').innerText = 'Er is een fout opgetreden bij het laden van de challenges.';
+      });
+    });
+
+    // Challenges: Verstuur een nieuwe challenge (actie: save_challenge)
+    document.getElementById('challengeForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const challengeName = form.challengeName.value;
+      const completedBy = form.completedBy.value;
+      const data = {
+        action: 'save_challenge',
+        challenge: {
+          challenge_name: challengeName,
+          completed_by: completedBy
+        }
+      };
+      fetch(scriptURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(result => {
+        document.getElementById('result').innerText = JSON.stringify(result, null, 2);
+        form.reset();
+      })
+      .catch(error => {
+        console.error('Fout bij challenge opslaan:', error);
+        document.getElementById('result').innerText = 'Er is een fout opgetreden bij het opslaan van de challenge.';
       });
     });
   </script>
