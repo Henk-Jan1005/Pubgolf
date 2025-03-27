@@ -2,63 +2,19 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <!-- Ensure proper scaling on mobile devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PUBGOLF Scoreboard</title>
   <!-- For offline use, download these fonts locally and update the paths accordingly -->
   <link href="local-path-to/roboto.css" rel="stylesheet">
   <link href="local-path-to/material-icons.css" rel="stylesheet">
   <style>
-    /* Global Styles */
     body {
       margin: 0;
       font-family: 'Roboto', sans-serif;
       background: #fafafa;
       color: #333;
     }
-    /* Login Container */
-    #login-container {
-      max-width: 600px;
-      margin: 100px auto 30px;
-      padding: 20px;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    #login-container h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #2575fc;
-    }
-    #login-container select,
-    #login-container input,
-    #login-container button {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      font-size: 16px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-sizing: border-box;
-    }
-    #login-container button {
-      background: #2575fc;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    #login-container button:hover {
-      background: #1a5ecb;
-    }
-    /* App Container */
-    #app {
-      display: none;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 15px;
-    }
-    /* Fixed Navbar at Top */
+    /* Navigation Bar */
     nav {
       position: fixed;
       top: 0;
@@ -83,10 +39,11 @@
     nav button:hover {
       transform: scale(1.1);
     }
-    /* Content Area (below navbar) */
+    /* Content Area */
     #content {
-      padding: 10px;
-      margin-top: 60px; /* space for navbar */
+      padding: 70px 15px 15px; /* leave space for the nav */
+      max-width: 800px;
+      margin: 0 auto;
     }
     .page {
       display: none;
@@ -95,47 +52,54 @@
       text-align: center;
       margin-top: 0;
     }
-    /* Edit Score Page: Player Cards with ± Buttons */
-    .player-card {
+    /* Team Setup Page */
+    .team-card {
       background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-    .player-card label {
-      display: block;
-      margin: 8px 0 4px;
-      font-weight: 500;
-    }
-    .player-card input[type="text"] {
-      width: 100%;
-      padding: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
       border: 1px solid #ddd;
       border-radius: 8px;
+    }
+    .team-card input {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
       font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
       box-sizing: border-box;
+    }
+    .team-card button {
+      padding: 6px 10px;
+      font-size: 14px;
+      border: none;
+      background: #2575fc;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .team-card button:hover {
+      background: #1a5ecb;
+    }
+    /* Player Score Cards */
+    .player-card {
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
     }
     .hole-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin: 6px 0;
-    }
-    .hole-row span {
-      flex: 1;
-      font-weight: 500;
-    }
-    .score-display {
-      width: 40px;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
+      margin: 5px 0;
     }
     .btn-adjust {
-      font-size: 24px;
-      width: 40px;
-      height: 40px;
+      font-size: 20px;
+      width: 36px;
+      height: 36px;
       border: none;
       background: #2575fc;
       color: #fff;
@@ -146,213 +110,119 @@
     .btn-adjust:active {
       background: #1a5ecb;
     }
-    .player-total {
+    .score-display {
+      width: 40px;
       text-align: center;
       font-size: 18px;
-      margin-top: 10px;
+      font-weight: bold;
+    }
+    .player-total {
+      text-align: center;
+      font-size: 16px;
+      margin-top: 5px;
       font-weight: 500;
     }
-    /* View Scores Page: Modern Card Layout */
-    .group-card {
-      background: #fff;
-      border-radius: 12px;
-      margin: 15px 0;
-      padding: 15px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-      transition: transform 0.2s;
-    }
-    .group-card:hover {
-      transform: scale(1.02);
-    }
-    .group-card h3 {
-      margin-bottom: 10px;
-      color: #2575fc;
-    }
-    .score-item {
-      font-size: 16px;
-      margin: 4px 0;
-    }
-    /* Chart Container */
-    .chart-container {
-      width: 100%;
-      max-width: 600px;
-      margin: 20px auto;
-    }
-    /* Challenges Page Styling */
+    /* Challenge Card */
     .challenge-card {
       background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-      padding: 15px;
-      margin-bottom: 15px;
-    }
-    .challenge-card p {
-      margin: 0 0 8px;
-      font-weight: 500;
-    }
-    .challenge-card button {
-      width: 100%;
       padding: 10px;
-      margin-top: 8px;
-      font-size: 16px;
+      margin-bottom: 10px;
       border: 1px solid #ddd;
       border-radius: 8px;
-      box-sizing: border-box;
+    }
+    .challenge-card button {
+      padding: 8px;
+      font-size: 14px;
+      border: none;
       background: #28a745;
       color: #fff;
-      border: none;
+      border-radius: 8px;
       cursor: pointer;
       transition: background 0.3s;
+      width: 100%;
+      box-sizing: border-box;
     }
     .challenge-card button:hover {
       background: #218838;
     }
-    .challenge-completed {
-      font-weight: bold;
-      color: #28a745;
-      text-align: center;
-    }
-    /* Map Page Styling */
-    #mapPage p {
-      text-align: center;
-      font-size: 18px;
-      padding: 20px;
-    }
-    /* Responsive Adjustments */
-    @media (max-width: 600px) {
-      nav button {
-        font-size: 24px;
-      }
-      .btn-adjust {
-        width: 36px;
-        height: 36px;
-        font-size: 20px;
-      }
-    }
   </style>
 </head>
 <body>
-  <!-- Login Section -->
-  <div id="login-container">
-    <h2>Login</h2>
-    <select id="groupSelect">
-      <option value="group1">Group 1 (3 drinking players)</option>
-      <option value="group2">Group 2 (2 drinking players)</option>
-      <option value="group3">Group 3 (2 drinking players)</option>
-    </select>
-    <input type="password" id="password" placeholder="Enter password">
-    <button onclick="login()">Login</button>
-  </div>
+  <!-- Navigation Bar -->
+  <nav>
+    <button onclick="showPage('setupPage')" title="Team Setup">
+      <span class="material-icons">group_add</span>
+    </button>
+    <button onclick="showPage('editScorePage')" title="Edit Scores">
+      <span class="material-icons">edit</span>
+    </button>
+    <button onclick="showPage('scoreGraphPage')" title="Score Graph">
+      <span class="material-icons">show_chart</span>
+    </button>
+    <button onclick="showPage('challengesPage')" title="Challenges">
+      <span class="material-icons">emoji_events</span>
+    </button>
+    <button onclick="clearSavedData()" title="Clear Data">
+      <span class="material-icons">delete_forever</span>
+    </button>
+  </nav>
   
-  <!-- Main App Container -->
-  <div id="app">
-    <!-- Fixed Navigation Bar -->
-    <nav>
-      <button onclick="showPage('editScorePage')" title="Edit Score">
-        <span class="material-icons">edit</span>
-      </button>
-      <button onclick="showPage('viewScoresPage')" title="View Scores">
-        <span class="material-icons">bar_chart</span>
-      </button>
-      <button onclick="showPage('mapPage')" title="Map">
-        <span class="material-icons">map</span>
-      </button>
-      <button onclick="showPage('challengesPage')" title="Challenges">
-        <span class="material-icons">emoji_events</span>
-      </button>
-      <button onclick="clearSavedData()" title="Clear Saved Data">
-        <span class="material-icons">delete_forever</span>
-      </button>
-    </nav>
+  <!-- Content Area -->
+  <div id="content">
+    <!-- Setup Teams Page -->
+    <div id="setupPage" class="page">
+      <div id="setupContent"></div>
+    </div>
     
-    <!-- Content Area -->
-    <div id="content">
-      <!-- Edit Score Page -->
-      <div id="editScorePage" class="page">
-        <h2>Edit Score - <span id="editGroupTitle"></span></h2>
-        <div id="editScoreContent"></div>
-      </div>
-      
-      <!-- View Scores Page -->
-      <div id="viewScoresPage" class="page">
-        <h2>View All Scores</h2>
-        <div class="chart-container">
-          <canvas id="scoreChart"></canvas>
-        </div>
-        <div id="viewScoresContent"></div>
-      </div>
-      
-      <!-- Map Page -->
-      <div id="mapPage" class="page">
-        <h2>Map</h2>
-        <p>Map coming soon.</p>
-      </div>
-      
-      <!-- Challenges Page -->
-      <div id="challengesPage" class="page">
-        <h2>Challenges</h2>
-        <div id="challengesContent"></div>
-      </div>
+    <!-- Edit Scores Page -->
+    <div id="editScorePage" class="page">
+      <div id="editScoreContent"></div>
+    </div>
+    
+    <!-- Score Graph Page -->
+    <div id="scoreGraphPage" class="page">
+      <div id="scoreGraphContent"></div>
+    </div>
+    
+    <!-- Challenges Page -->
+    <div id="challengesPage" class="page">
+      <div id="challengesContent"></div>
     </div>
   </div>
   
-  <!-- Include Chart.js locally for offline use. Download the file and update the src accordingly -->
+  <!-- Include Chart.js locally for offline use -->
   <script src="local-path-to/chart.js"></script>
   <script>
-    /* ---------------------------
-       Global Configuration
-    ---------------------------- */
-    const groupData = {
-      group1: { password: "Thobias1", players: 3, title: "Group 1" },
-      group2: { password: "Thobias2", players: 2, title: "Group 2" },
-      group3: { password: "Thobias3", players: 2, title: "Group 3" }
-    };
-
-    let currentGroup = "";
-    let scoreboard = []; // Array of player objects: { name: "", scores: [9 numbers] }
-    // Global challenges object.
+    // Global Data Structures
+    // Teams is an array of objects: { name: string, players: [ { name: string, scores: [9 numbers] } ] }
+    let teams = [];
+    // Challenges object: keys are challenge names, each with a { completedBy: teamName or null }
     let challenges = {};
 
-    /* ---------------------------
-       Data Persistence Functions
-    ---------------------------- */
-    function saveScoreboard(group = currentGroup) {
-      localStorage.setItem('pubgolfScoreboard_' + group, JSON.stringify(scoreboard));
+    // ---------------------------
+    // Teams Persistence
+    // ---------------------------
+    function saveTeams() {
+      localStorage.setItem('pubgolfTeams', JSON.stringify(teams));
     }
-    
-    function loadScoreboard(group = currentGroup) {
-      const data = localStorage.getItem('pubgolfScoreboard_' + group);
-      if (data) {
-        scoreboard = JSON.parse(data);
-      } else {
-        initScoreboard(group);
-      }
+    function loadTeams() {
+      const data = localStorage.getItem('pubgolfTeams');
+      teams = data ? JSON.parse(data) : [];
     }
-    
-    function initScoreboard(group = currentGroup) {
-      scoreboard = [];
-      const numPlayers = groupData[group].players;
-      for (let i = 0; i < numPlayers; i++) {
-        scoreboard.push({
-          name: "Player " + (i + 1),
-          scores: Array(9).fill(0)
-        });
-      }
-      saveScoreboard(group);
-    }
-    
+
+    // ---------------------------
+    // Challenges Persistence
+    // ---------------------------
     function saveChallenges() {
       localStorage.setItem('pubgolfChallenges', JSON.stringify(challenges));
     }
-    
-    // Load challenges from localStorage or, if not available, fetch them from challenges.txt
     function loadChallenges() {
       const data = localStorage.getItem('pubgolfChallenges');
       if (data) {
         challenges = JSON.parse(data);
         renderChallengesPage();
       } else {
-        // Load challenges from challenges.txt via fetch
+        // Fetch from challenges.txt
         fetch("challenges.txt")
           .then(response => response.text())
           .then(text => {
@@ -368,202 +238,177 @@
           })
           .catch(err => {
             console.error("Error loading challenges.txt:", err);
-            // Fallback: use an empty challenges object.
             challenges = {};
           });
       }
     }
     
-    // Compute team total: Sum of all player scores minus one point for each challenge completed by current group.
-    function computeTeamTotal(scoreboard) {
-      let total = 0;
-      scoreboard.forEach(player => {
-        total += player.scores.reduce((a, b) => a + Number(b), 0);
-      });
-      let challengeCount = 0;
-      for (let ch in challenges) {
-        if (challenges[ch].completedBy === currentGroup) {
-          challengeCount++;
-        }
-      }
-      return total - challengeCount;
-    }
-    
-    /* ---------------------------
-       Login Function
-    ---------------------------- */
-    function login() {
-      const selectedGroup = document.getElementById('groupSelect').value;
-      const enteredPassword = document.getElementById('password').value;
-      if (enteredPassword === groupData[selectedGroup].password) {
-        currentGroup = selectedGroup;
-        document.getElementById('login-container').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        loadScoreboard();
-        loadChallenges();
-        document.getElementById('editGroupTitle').textContent = groupData[currentGroup].title;
-        showPage('editScorePage');
-        renderEditScorePage();
-      } else {
-        alert("Incorrect password. Please try again.");
-      }
-    }
-    
-    /* ---------------------------
-       Navigation Functions
-    ---------------------------- */
+    // ---------------------------
+    // Navigation
+    // ---------------------------
     function showPage(pageId) {
       const pages = document.getElementsByClassName('page');
       for (let page of pages) {
         page.style.display = 'none';
       }
       document.getElementById(pageId).style.display = 'block';
-      if (pageId === 'editScorePage') {
+      if (pageId === 'setupPage') {
+        renderSetupPage();
+      } else if (pageId === 'editScorePage') {
         renderEditScorePage();
-      } else if (pageId === 'viewScoresPage') {
-        renderViewScoresPage();
+      } else if (pageId === 'scoreGraphPage') {
+        renderScoreGraphPage();
       } else if (pageId === 'challengesPage') {
         renderChallengesPage();
       }
     }
     
-    /* ---------------------------
-       Edit Score Page (Vertical Layout with ± Buttons)
-    ---------------------------- */
-    function renderEditScorePage() {
-      let html = '';
-      scoreboard.forEach((player, pIndex) => {
-        html += '<div class="player-card">';
-        html += '<label>Player Name: <input type="text" value="'+ player.name +'" onchange="updatePlayerName('+ pIndex +', this.value)" /></label>';
-        for (let i = 0; i < 9; i++) {
-          html += '<div class="hole-row">';
-          html += '<span>Hole ' + (i+1) + ':</span>';
-          html += '<button class="btn-adjust" onclick="decrementScore('+ pIndex +', '+ i +')">–</button>';
-          html += '<span class="score-display">' + player.scores[i] + '</span>';
-          html += '<button class="btn-adjust" onclick="incrementScore('+ pIndex +', '+ i +')">+</button>';
+    // ---------------------------
+    // Setup Teams Page Functions
+    // ---------------------------
+    function renderSetupPage() {
+      let html = '<h2>Team Setup</h2>';
+      if (teams.length === 0) {
+        html += '<p>No teams defined. Please add a team below.</p>';
+      }
+      teams.forEach((team, tIndex) => {
+        html += '<div class="team-card">';
+        html += 'Team Name: <input type="text" value="' + team.name + '" onchange="updateTeamName(' + tIndex + ', this.value)" />';
+        html += '<div style="margin-top:10px;"><strong>Players:</strong></div>';
+        team.players.forEach((player, pIndex) => {
+          html += '<div class="player-item" style="margin:5px 0;">';
+          html += '<input type="text" value="' + player.name + '" onchange="updatePlayerName(' + tIndex + ',' + pIndex + ', this.value)" />';
           html += '</div>';
-        }
-        let playerTotal = player.scores.reduce((a, b) => a + Number(b), 0);
-        html += '<p class="player-total">Player Total: ' + playerTotal + '</p>';
+        });
+        html += '<button onclick="addPlayer(' + tIndex + ')">Add Player</button>';
         html += '</div>';
       });
-      const teamTotal = computeTeamTotal(scoreboard);
-      html += '<p style="text-align:center; font-size:20px; font-weight:bold; color:#2575fc;">Team Final Score: ' + teamTotal + '</p>';
+      html += '<button onclick="addTeam()" style="margin-top:10px;">Add Team</button>';
+      html += '<br/><button onclick="startGame()" style="margin-top:20px; background:#2575fc; color:#fff; padding:10px; border:none; border-radius:8px;">Start Game</button>';
+      document.getElementById('setupContent').innerHTML = html;
+    }
+    
+    function addTeam() {
+      teams.push({ name: "New Team", players: [] });
+      saveTeams();
+      renderSetupPage();
+    }
+    
+    function updateTeamName(tIndex, newName) {
+      teams[tIndex].name = newName;
+      saveTeams();
+      renderSetupPage();
+    }
+    
+    function addPlayer(tIndex) {
+      teams[tIndex].players.push({ name: "Player " + (teams[tIndex].players.length + 1), scores: Array(9).fill(0) });
+      saveTeams();
+      renderSetupPage();
+    }
+    
+    function updatePlayerName(tIndex, pIndex, newName) {
+      teams[tIndex].players[pIndex].name = newName;
+      saveTeams();
+      renderSetupPage();
+    }
+    
+    function startGame() {
+      if (teams.length === 0) {
+        alert("Please add at least one team.");
+        return;
+      }
+      saveTeams();
+      showPage('editScorePage');
+      renderEditScorePage();
+    }
+    
+    // ---------------------------
+    // Edit Scores Page Functions
+    // ---------------------------
+    function renderEditScorePage() {
+      let html = '<h2>Edit Scores</h2>';
+      teams.forEach((team, tIndex) => {
+        html += '<div class="team-section" style="border:1px solid #ddd; padding:10px; margin-bottom:20px; border-radius:8px;">';
+        html += '<h3>' + team.name + '</h3>';
+        team.players.forEach((player, pIndex) => {
+          html += '<div class="player-card">';
+          html += '<label>Player Name: <input type="text" value="' + player.name + '" onchange="editUpdatePlayerName(' + tIndex + ',' + pIndex + ', this.value)" /></label>';
+          for (let i = 0; i < 9; i++) {
+            html += '<div class="hole-row">';
+            html += '<span>Hole ' + (i + 1) + ':</span>';
+            html += '<button class="btn-adjust" onclick="decrementScore(' + tIndex + ',' + pIndex + ',' + i + ')">–</button>';
+            html += '<span class="score-display">' + player.scores[i] + '</span>';
+            html += '<button class="btn-adjust" onclick="incrementScore(' + tIndex + ',' + pIndex + ',' + i + ')">+</button>';
+            html += '</div>';
+          }
+          let playerTotal = player.scores.reduce((a, b) => a + Number(b), 0);
+          html += '<p class="player-total">Player Total: ' + playerTotal + '</p>';
+          html += '</div>';
+        });
+        html += '</div>';
+      });
+      // Display overall team totals
+      html += '<h2>Game Totals</h2>';
+      teams.forEach(team => {
+        let teamTotal = 0;
+        team.players.forEach(player => {
+          teamTotal += player.scores.reduce((a, b) => a + Number(b), 0);
+        });
+        html += '<p><strong>' + team.name + ':</strong> ' + teamTotal + '</p>';
+      });
       document.getElementById('editScoreContent').innerHTML = html;
     }
     
-    function updatePlayerName(index, newName) {
-      scoreboard[index].name = newName;
-      saveScoreboard();
+    function incrementScore(tIndex, pIndex, holeIndex) {
+      teams[tIndex].players[pIndex].scores[holeIndex]++;
+      saveTeams();
       renderEditScorePage();
     }
     
-    function incrementScore(playerIndex, holeIndex) {
-      scoreboard[playerIndex].scores[holeIndex] = Number(scoreboard[playerIndex].scores[holeIndex]) + 1;
-      saveScoreboard();
+    function decrementScore(tIndex, pIndex, holeIndex) {
+      teams[tIndex].players[pIndex].scores[holeIndex] = Math.max(0, teams[tIndex].players[pIndex].scores[holeIndex] - 1);
+      saveTeams();
       renderEditScorePage();
     }
     
-    function decrementScore(playerIndex, holeIndex) {
-      scoreboard[playerIndex].scores[holeIndex] = Math.max(0, Number(scoreboard[playerIndex].scores[holeIndex]) - 1);
-      saveScoreboard();
+    function editUpdatePlayerName(tIndex, pIndex, newName) {
+      teams[tIndex].players[pIndex].name = newName;
+      saveTeams();
       renderEditScorePage();
     }
     
-    /* ---------------------------
-       View Scores Page (Modern Card Layout)
-    ---------------------------- */
-    function renderViewScoresPage() {
-      let html = '';
-      for (let group in groupData) {
-        let groupScoreboard = JSON.parse(localStorage.getItem('pubgolfScoreboard_' + group));
-        if (!groupScoreboard) continue;
-        let teamTotal = 0;
-        groupScoreboard.forEach(player => {
-          teamTotal += player.scores.reduce((a, b) => a + Number(b), 0);
-        });
-        let challengeCount = 0;
-        for (let ch in challenges) {
-          if (challenges[ch].completedBy === group) {
-            challengeCount++;
-          }
-        }
-        teamTotal -= challengeCount;
-        html += '<div class="group-card">';
-        html += '<h3>' + groupData[group].title + ' (Final Score: ' + teamTotal + ')</h3>';
-        groupScoreboard.forEach(player => {
-          const playerTotal = player.scores.reduce((a, b) => a + Number(b), 0);
-          html += '<div class="score-item">' + player.name + ' – Score: ' + playerTotal + '</div>';
-        });
-        html += '</div>';
-      }
-      document.getElementById('viewScoresContent').innerHTML = html;
+    // ---------------------------
+    // Score Graph Page Functions
+    // ---------------------------
+    function renderScoreGraphPage() {
+      let html = '<h2>Score Graph</h2>';
+      html += '<div class="chart-container" style="margin:0 auto;"><canvas id="scoreChart"></canvas></div>';
+      document.getElementById('scoreGraphContent').innerHTML = html;
       updateChart();
     }
     
-    /* ---------------------------
-       Challenges Page (Global: Once Per Group)
-    ---------------------------- */
-    function renderChallengesPage() {
-      let html = '';
-      for (let challenge in challenges) {
-        html += '<div class="challenge-card">';
-        html += '<p><strong>' + challenge + '</strong></p>';
-        if (challenges[challenge].completedBy === null) {
-          html += '<button onclick="confirmChallenge(\''+ challenge +'\')">Complete Challenge</button>';
-        } else {
-          html += '<p class="challenge-completed">Completed by: ' + groupData[challenges[challenge].completedBy].title + '</p>';
-        }
-        html += '</div>';
-      }
-      document.getElementById('challengesContent').innerHTML = html;
-    }
-    
-    function confirmChallenge(challengeName) {
-      if (confirm("Are you sure you want to complete \"" + challengeName + "\"? This action cannot be undone.")) {
-        challenges[challengeName].completedBy = currentGroup;
-        saveChallenges();
-        alert("Challenge \"" + challengeName + "\" completed by " + groupData[currentGroup].title + "!");
-        renderChallengesPage();
-        renderEditScorePage();
-      }
-    }
-    
-    /* ---------------------------
-       Graph: Update Chart (View Scores Page)
-    ---------------------------- */
-    let scoreChart;
     function updateChart() {
       const labels = [];
       const data = [];
-      for (let group in groupData) {
-        let groupScoreboard = JSON.parse(localStorage.getItem('pubgolfScoreboard_' + group));
-        if (!groupScoreboard) continue;
+      teams.forEach(team => {
         let teamTotal = 0;
-        groupScoreboard.forEach(player => {
+        team.players.forEach(player => {
           teamTotal += player.scores.reduce((a, b) => a + Number(b), 0);
         });
-        let challengeCount = 0;
-        for (let ch in challenges) {
-          if (challenges[ch].completedBy === group) {
-            challengeCount++;
-          }
-        }
-        teamTotal -= challengeCount;
-        labels.push(groupData[group].title);
+        labels.push(team.name);
         data.push(teamTotal);
-      }
+      });
       
       const ctx = document.getElementById('scoreChart').getContext('2d');
-      if (scoreChart) { scoreChart.destroy(); }
-      scoreChart = new Chart(ctx, {
+      if (window.scoreChartInstance) { window.scoreChartInstance.destroy(); }
+      window.scoreChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: labels,
           datasets: [{
-            label: 'Team Final Score',
+            label: 'Team Total Score',
             data: data,
-            backgroundColor: 'rgba(37, 117, 252, 0.7)'
+            backgroundColor: 'rgba(37,117,252,0.7)'
           }]
         },
         options: {
@@ -577,29 +422,61 @@
       });
     }
     
-    /* ---------------------------
-       Clear Saved Data Function
-    ---------------------------- */
-    function clearSavedData() {
-      if (confirm("Are you sure you want to clear all saved data? This will remove all scores and challenge completions.")) {
-        for (let group in groupData) {
-          localStorage.removeItem('pubgolfScoreboard_' + group);
+    // ---------------------------
+    // Challenges Page Functions
+    // ---------------------------
+    function renderChallengesPage() {
+      let html = '<h2>Challenges</h2>';
+      for (let challenge in challenges) {
+        html += '<div class="challenge-card">';
+        html += '<p><strong>' + challenge + '</strong></p>';
+        if (challenges[challenge].completedBy === null) {
+          html += '<button onclick="confirmChallenge(\'' + challenge + '\')">Complete Challenge</button>';
+        } else {
+          html += '<p class="challenge-completed">Completed by: ' + challenges[challenge].completedBy + '</p>';
         }
+        html += '</div>';
+      }
+      document.getElementById('challengesContent').innerHTML = html;
+    }
+    
+    function confirmChallenge(challengeName) {
+      const teamName = prompt("Enter the team name that completed the challenge:", "");
+      if (teamName) {
+        const exists = teams.some(team => team.name === teamName);
+        if (!exists) {
+          alert("No team with that name found. Please check team names.");
+          return;
+        }
+        challenges[challengeName].completedBy = teamName;
+        saveChallenges();
+        alert("Challenge \"" + challengeName + "\" completed by " + teamName + "!");
+        renderChallengesPage();
+        renderEditScorePage();
+      }
+    }
+    
+    // ---------------------------
+    // Clear Data Function
+    // ---------------------------
+    function clearSavedData() {
+      if (confirm("Are you sure you want to clear all saved data? This will remove all teams, scores, and challenge completions.")) {
+        localStorage.removeItem('pubgolfTeams');
         localStorage.removeItem('pubgolfChallenges');
         alert("Saved data cleared. The page will now reload.");
         location.reload();
       }
     }
     
-    /* ---------------------------
-       Auto-Save Interval
-    ---------------------------- */
-    setInterval(function(){
-      if (currentGroup) {
-        saveScoreboard();
-        saveChallenges();
-      }
-    }, 30000);
+    // ---------------------------
+    // Initialize on Page Load
+    // ---------------------------
+    window.onload = function() {
+      loadTeams();
+      loadChallenges();
+      // Default to the Setup Page
+      showPage('setupPage');
+    }
   </script>
 </body>
 </html>
