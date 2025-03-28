@@ -587,7 +587,7 @@
             if (section) {
               let lines = section.split('\n');
               let title = lines[0].trim();
-              let content = lines.slice(1).join('content<br>');
+              let content = lines.slice(1).join('<br>');
               html += '<div class="section">';
               html += '<strong>' + title + '</strong>';
               html += '<p>' + content + '</p>';
