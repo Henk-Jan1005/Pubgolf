@@ -75,7 +75,7 @@
     th {
       background-color: #f2f2f2;
     }
-    /* Team Setup Page */
+    /* Team Setup Page (only used before game start) */
     .team-card {
       background: #fff;
       padding: 15px;
@@ -178,28 +178,42 @@
       border: 0;
       margin: 0 auto;
     }
+    /* Summaries Page */
+    #summariesPage div.section {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    #summariesPage div.section strong {
+      display: block;
+      font-weight: bold;
+    }
+    #summariesPage div.section span {
+      display: block;
+      font-weight: normal;
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
   <!-- Navigation Bar -->
   <nav>
-    <!-- Setup tab remains -->
-    <button onclick="showPage('setupPage')" title="Team Setup">
-      <span class="material-icons">group_add</span>
+    <!-- Edit Scores tab is now visible -->
+    <button onclick="showPage('editScorePage')" title="Edit Scores">
+      <span class="material-icons">edit</span>
     </button>
     <!-- New Summaries tab -->
     <button onclick="showPage('summariesPage')" title="Summaries">
       <span class="material-icons">library_books</span>
     </button>
-    <!-- Score Graph tab remains -->
+    <!-- Score Graph tab -->
     <button onclick="showPage('scoreGraphPage')" title="Score Graph">
       <span class="material-icons">show_chart</span>
     </button>
-    <!-- Challenges tab remains -->
+    <!-- Challenges tab -->
     <button onclick="showPage('challengesPage')" title="Challenges">
       <span class="material-icons">emoji_events</span>
     </button>
-    <!-- Map tab remains -->
+    <!-- Map tab -->
     <button onclick="showPage('mapPage')" title="Map">
       <span class="material-icons">map</span>
     </button>
@@ -211,12 +225,12 @@
   
   <!-- Content Area -->
   <div id="content">
-    <!-- Setup Teams Page -->
+    <!-- Team Setup Page (only accessible before game start; not in navbar) -->
     <div id="setupPage" class="page">
       <div id="setupContent"></div>
     </div>
     
-    <!-- Edit Scores Page (hidden from navbar; accessible via Start Game) -->
+    <!-- Edit Scores Page -->
     <div id="editScorePage" class="page">
       <div id="editScoreContent"></div>
     </div>
@@ -316,7 +330,7 @@
     }
     
     // ---------------------------
-    // Setup Teams Page Functions
+    // Setup Teams Page Functions (used before game start)
     // ---------------------------
     function renderSetupPage() {
       let html = '<h2>Team Setup</h2>';
@@ -370,12 +384,13 @@
         return;
       }
       saveTeams();
+      // After starting, the team setup is no longer accessible from the navbar.
       showPage('editScorePage');
       renderEditScorePage();
     }
     
     // ---------------------------
-    // Edit Scores Page Functions (kept but hidden from navbar)
+    // Edit Scores Page Functions
     // ---------------------------
     function renderEditScorePage() {
       let html = '<h2>Edit Scores</h2>';
@@ -549,7 +564,6 @@
       fetch("summaries.txt")
         .then(response => response.text())
         .then(text => {
-          // Split text into sections based on double newlines (or one blank line)
           let sections = text.split(/\n\s*\n/);
           sections.forEach(section => {
             section = section.trim();
@@ -557,8 +571,10 @@
               let lines = section.split('\n');
               let title = lines[0].trim();
               let content = lines.slice(1).join('<br>');
-              html += '<h3>' + title + '</h3>';
-              html += '<p>' + content + '</p>';
+              html += '<div class="section">';
+              html += '<strong>' + title + '</strong><br>';
+              html += '<span>' + content + '</span>';
+              html += '</div>';
             }
           });
           document.getElementById('summariesContent').innerHTML = html;
@@ -592,7 +608,8 @@
     window.onload = function() {
       loadTeams();
       loadChallenges();
-      showPage('setupPage');
+      // Start with Edit Scores page (teams should already be set up)
+      showPage('editScorePage');
     }
   </script>
 </body>
