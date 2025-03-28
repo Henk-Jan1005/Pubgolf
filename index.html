@@ -179,18 +179,19 @@
       margin: 0 auto;
     }
     /* Summaries Page */
-    #summariesPage div.section {
+    #summariesPage .section {
       text-align: left;
-      margin-bottom: 20px;
     }
-    #summariesPage div.section strong {
+    #summariesPage .section strong {
       display: block;
       font-weight: bold;
     }
-    #summariesPage div.section span {
-      display: block;
-      font-weight: normal;
-      margin-top: 5px;
+    #summariesPage .section p {
+      margin: 5px 0 0 0;
+    }
+    /* Only add extra whitespace before a new section */
+    #summariesPage .section + .section {
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -225,7 +226,7 @@
   
   <!-- Content Area -->
   <div id="content">
-    <!-- Team Setup Page (only accessible before game start; not in navbar) -->
+    <!-- Team Setup Page (accessible only before game start) -->
     <div id="setupPage" class="page">
       <div id="setupContent"></div>
     </div>
@@ -572,8 +573,8 @@
               let title = lines[0].trim();
               let content = lines.slice(1).join('<br>');
               html += '<div class="section">';
-              html += '<strong>' + title + '</strong><br>';
-              html += '<span>' + content + '</span>';
+              html += '<strong>' + title + '</strong>';
+              html += '<p>' + content + '</p>';
               html += '</div>';
             }
           });
@@ -608,8 +609,12 @@
     window.onload = function() {
       loadTeams();
       loadChallenges();
-      // Start with Edit Scores page (teams should already be set up)
-      showPage('editScorePage');
+      // If no teams exist, show the setup page; otherwise show edit scores
+      if (teams.length === 0) {
+        showPage('setupPage');
+      } else {
+        showPage('editScorePage');
+      }
     }
   </script>
 </body>
