@@ -188,21 +188,30 @@
     }
     #summariesPage .section p {
       margin: 5px 0 0 0;
+      font-weight: normal;
     }
-    /* Only add extra whitespace before a new section */
+    /* Add extra whitespace before a new section */
     #summariesPage .section + .section {
       margin-top: 20px;
+    }
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+      color: #777;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
   <!-- Navigation Bar -->
   <nav>
-    <!-- Edit Scores tab is now visible -->
+    <!-- Edit Scores tab -->
     <button onclick="showPage('editScorePage')" title="Edit Scores">
       <span class="material-icons">edit</span>
     </button>
-    <!-- New Summaries tab -->
+    <!-- Summaries tab -->
     <button onclick="showPage('summariesPage')" title="Summaries">
       <span class="material-icons">library_books</span>
     </button>
@@ -226,7 +235,7 @@
   
   <!-- Content Area -->
   <div id="content">
-    <!-- Team Setup Page (accessible only before game start) -->
+    <!-- Team Setup Page (only accessible before game start) -->
     <div id="setupPage" class="page">
       <div id="setupContent"></div>
     </div>
@@ -257,6 +266,11 @@
       <div id="summariesContent"></div>
     </div>
   </div>
+  
+  <!-- Footer -->
+  <footer>
+    © 2025 PUBGOLF Scoreboard. All rights reserved.
+  </footer>
   
   <!-- Include Chart.js from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -385,7 +399,7 @@
         return;
       }
       saveTeams();
-      // After starting, the team setup is no longer accessible from the navbar.
+      // After starting, team setup is no longer accessible from the navbar.
       showPage('editScorePage');
       renderEditScorePage();
     }
@@ -609,7 +623,7 @@
     window.onload = function() {
       loadTeams();
       loadChallenges();
-      // If no teams exist, show the setup page; otherwise show edit scores
+      // If no teams exist, show the setup page; otherwise, show edit scores.
       if (teams.length === 0) {
         showPage('setupPage');
       } else {
